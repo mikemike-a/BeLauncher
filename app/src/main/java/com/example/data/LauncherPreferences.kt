@@ -22,6 +22,8 @@ data class AkoUserPreferences(
     val iconSizeDp: Int = 56,
     val favoritePackages: Set<String> = emptySet(),
     val hiddenPackages: Set<String> = emptySet(),
+    val widgets: Set<String> = emptySet(),
+    val workspaceItems: Set<String> = emptySet(),
     val enableLockScreen: Boolean = true,
     val isDarkModeEnabled: Boolean = false
 )
@@ -34,6 +36,8 @@ class LauncherPreferences(private val context: Context) {
         val ICON_SIZE = intPreferencesKey("icon_size_dp")
         val FAVORITES = stringSetPreferencesKey("favorite_packages")
         val HIDDEN = stringSetPreferencesKey("hidden_packages")
+        val WIDGETS = stringSetPreferencesKey("home_widgets")
+        val WORKSPACE_ITEMS = stringSetPreferencesKey("workspace_items")
         val LOCK_SCREEN = booleanPreferencesKey("enable_lock_screen")
         val DARK_MODE = booleanPreferencesKey("enable_dark_mode")
     }
@@ -56,6 +60,8 @@ class LauncherPreferences(private val context: Context) {
         val iconSize = prefs[Keys.ICON_SIZE] ?: 56
         val favorites = prefs[Keys.FAVORITES] ?: emptySet()
         val hidden = prefs[Keys.HIDDEN] ?: emptySet()
+        val widgets = prefs[Keys.WIDGETS] ?: emptySet()
+        val workspaceItems = prefs[Keys.WORKSPACE_ITEMS] ?: emptySet()
         val lockScreen = prefs[Keys.LOCK_SCREEN] ?: true
         val darkMode = prefs[Keys.DARK_MODE] ?: false
 
@@ -65,9 +71,43 @@ class LauncherPreferences(private val context: Context) {
             iconSizeDp = iconSize,
             favoritePackages = favorites,
             hiddenPackages = hidden,
+            widgets = widgets,
+            workspaceItems = workspaceItems,
             enableLockScreen = lockScreen,
             isDarkModeEnabled = darkMode
         )
+    }
+
+    suspend fun addWidget(widgetId: Int) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.WIDGETS] ?: emptySet()
+            prefs[Keys.WIDGETS] = current + widgetId.toString()
+        }
+    }
+
+    suspend fun removeWidget(widgetId: Int) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.WIDGETS] ?: emptySet()
+            prefs[Keys.WIDGETS] = current - widgetId.toString()
+        }
+    }
+
+    suspend fun addWorkspaceItem(item: WorkspaceItem) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.WORKSPACE_ITEMS] ?: emptySet()
+            // Remove any existing item at the same page/row/col
+            val prefix = "${item.page}:${item.row}:${item.col}:"
+            val filtered = current.filterNot { it.startsWith(prefix) }.toSet()
+            prefs[Keys.WORKSPACE_ITEMS] = filtered + item.toPrefString()
+        }
+    }
+
+    suspend fun removeWorkspaceItem(page: Int, row: Int, col: Int) {
+        context.dataStore.edit { prefs ->
+            val current = prefs[Keys.WORKSPACE_ITEMS] ?: emptySet()
+            val prefix = "$page:$row:$col:"
+            prefs[Keys.WORKSPACE_ITEMS] = current.filterNot { it.startsWith(prefix) }.toSet()
+        }
     }
 
     suspend fun setIconShape(shape: AkoIconShape) {

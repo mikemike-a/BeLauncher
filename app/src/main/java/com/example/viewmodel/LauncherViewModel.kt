@@ -210,6 +210,69 @@ class LauncherViewModel(
         }
     }
 
+    fun addWidget(widgetId: Int) {
+        viewModelScope.launch {
+            preferences.addWidget(widgetId)
+        }
+    }
+
+    fun removeWidget(widgetId: Int) {
+        viewModelScope.launch {
+            preferences.removeWidget(widgetId)
+        }
+    }
+
+    fun addWorkspaceItem(item: com.example.data.WorkspaceItem) {
+        viewModelScope.launch {
+            preferences.addWorkspaceItem(item)
+        }
+    }
+
+    fun removeWorkspaceItem(page: Int, row: Int, col: Int) {
+        viewModelScope.launch {
+            preferences.removeWorkspaceItem(page, row, col)
+        }
+    }
+
+    fun addAppToWorkspace(app: AppModel) {
+        viewModelScope.launch {
+            val prefs = uiState.value.preferences
+            val currentItems = prefs.workspaceItems.mapNotNull { 
+                com.example.data.WorkspaceItem.fromPrefString(it)
+            }
+            // Find first empty slot on page 0 (or up to page 2). Grid is 4x5.
+            var foundSlot: com.example.data.WorkspaceItem? = null
+            for (page in 0..2) {
+                for (row in 0..4) {
+                    for (col in 0..3) {
+                        if (currentItems.none { it.page == page && it.row == row && it.col == col }) {
+                            foundSlot = com.example.data.WorkspaceItem(page, row, col, app.packageName)
+                            break
+                        }
+                    }
+                    if (foundSlot != null) break
+                }
+                if (foundSlot != null) break
+            }
+            if (foundSlot != null) {
+                preferences.addWorkspaceItem(foundSlot)
+            }
+        }
+    }
+
+    fun removeAppFromWorkspace(app: AppModel) {
+        viewModelScope.launch {
+            val prefs = uiState.value.preferences
+            val itemToRemove = prefs.workspaceItems.mapNotNull { 
+                com.example.data.WorkspaceItem.fromPrefString(it)
+            }.find { it.packageName == app.packageName }
+            
+            if (itemToRemove != null) {
+                preferences.removeWorkspaceItem(itemToRemove.page, itemToRemove.row, itemToRemove.col)
+            }
+        }
+    }
+
     private fun calculateGreeting(): String {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         return when (hour) {

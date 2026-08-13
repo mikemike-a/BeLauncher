@@ -22,6 +22,8 @@ import androidx.compose.material.icons.rounded.Launch
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarOutline
 import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.AddCircleOutline
+import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,9 +48,12 @@ import com.example.ui.components.GlassCard
 @Composable
 fun QuickActionsPopup(
     app: AppModel,
+    isInWorkspace: Boolean,
     iconShape: com.example.ui.theme.AkoIconShape,
     onDismiss: () -> Unit,
     onLaunch: () -> Unit,
+    onAddToWorkspace: () -> Unit,
+    onRemoveFromWorkspace: () -> Unit,
     onToggleFavorite: () -> Unit,
     onToggleHide: () -> Unit,
     onAppInfo: () -> Unit,
@@ -108,6 +113,17 @@ fun QuickActionsPopup(
                 onClick = {
                     onDismiss()
                     onLaunch()
+                }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            QuickActionPill(
+                icon = if (isInWorkspace) Icons.Rounded.RemoveCircleOutline else Icons.Rounded.AddCircleOutline,
+                label = if (isInWorkspace) "Retirer de l'écran d'accueil" else "Ajouter à l'écran d'accueil",
+                onClick = {
+                    onDismiss()
+                    if (isInWorkspace) onRemoveFromWorkspace() else onAddToWorkspace()
                 }
             )
 

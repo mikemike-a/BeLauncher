@@ -33,12 +33,73 @@ import com.example.ui.theme.AkoTheme
 import com.example.viewmodel.LauncherScreen
 import com.example.viewmodel.LauncherViewModel
 
+import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetManager
+import android.app.Activity
+import androidx.activity.result.contract.ActivityResultContracts
+
 class MainActivity : ComponentActivity() {
 
     private lateinit var preferences: LauncherPreferences
     private lateinit var repository: AppRepository
     private val viewModel: LauncherViewModel by viewModels {
         LauncherViewModel.Factory(repository, preferences)
+    }
+
+    private lateinit var appWidgetManager: AppWidgetManager
+    private lateinit var appWidgetHost: AppWidgetHost
+
+    companion object {
+        private const val APPWIDGET_HOST_ID = 1024
+    }
+
+    private val pickWidgetLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val appWidgetId = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) ?: -1
+            if (appWidgetId != -1) {
+                configureWidget(appWidgetId)
+            }
+        } else {
+            val appWidgetId = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+            if (appWidgetId != null && appWidgetId != -1) {
+                appWidgetHost.deleteAppWidgetId(appWidgetId)
+            }
+        }
+    }
+
+    private val configureWidgetLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val appWidgetId = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) ?: -1
+            if (appWidgetId != -1) {
+                viewModel.addWidget(appWidgetId)
+            }
+        } else {
+            val appWidgetId = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
+            if (appWidgetId != null && appWidgetId != -1) {
+                appWidgetHost.deleteAppWidgetId(appWidgetId)
+            }
+        }
+    }
+
+    fun selectWidget() {
+        val appWidgetId = appWidgetHost.allocateAppWidgetId()
+        val pickIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_PICK).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+        pickWidgetLauncher.launch(pickIntent)
+    }
+
+    private fun configureWidget(appWidgetId: Int) {
+        val appWidgetInfo = appWidgetManager.getAppWidgetInfo(appWidgetId)
+        if (appWidgetInfo?.configure != null) {
+            val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE).apply {
+                component = appWidgetInfo.configure
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            configureWidgetLauncher.launch(intent)
+        } else {
+            viewModel.addWidget(appWidgetId)
+        }
     }
 
     private val packageChangeReceiver = object : BroadcastReceiver() {
@@ -54,6 +115,10 @@ class MainActivity : ComponentActivity() {
 
         preferences = LauncherPreferences(applicationContext)
         repository = AppRepository(applicationContext, preferences)
+        
+        appWidgetManager = AppWidgetManager.getInstance(this)
+        appWidgetHost = AppWidgetHost(this, APPWIDGET_HOST_ID)
+        appWidgetHost.startListening()
 
         // Register package change receiver
         val filter = IntentFilter().apply {
@@ -108,6 +173,16 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen(
                                     greetingMessage = uiState.greetingMessage,
                                     favorites = uiState.favoriteApps,
+                                    allApps = uiState.allApps,
+                                    widgets = uiState.preferences.widgets,
+                                    workspaceItems = uiState.preferences.workspaceItems,
+                                    appWidgetHost = appWidgetHost,
+                                    appWidgetManager = appWidgetManager,
+                                    onAddWidget = { selectWidget() },
+                                    onRemoveWidget = { widgetId -> 
+                                        viewModel.removeWidget(widgetId)
+                                        appWidgetHost.deleteAppWidgetId(widgetId)
+                                    },
                                     groupedApps = uiState.groupedApps,
                                     alphabetIndex = uiState.alphabetIndex,
                                     iconSizeDp = uiState.preferences.iconSizeDp,
@@ -148,9 +223,12 @@ class MainActivity : ComponentActivity() {
                     uiState.quickActionApp?.let { app ->
                         QuickActionsPopup(
                             app = app,
+                            isInWorkspace = uiState.preferences.workspaceItems.any { it.endsWith(app.packageName) },
                             iconShape = uiState.preferences.iconShape,
                             onDismiss = { viewModel.dismissQuickActions() },
                             onLaunch = { viewModel.launchApp(this@MainActivity, app) },
+                            onAddToWorkspace = { viewModel.addAppToWorkspace(app) },
+                            onRemoveFromWorkspace = { viewModel.removeAppFromWorkspace(app) },
                             onToggleFavorite = { viewModel.toggleFavorite(app) },
                             onToggleHide = { viewModel.toggleHideApp(app) },
                             onAppInfo = { viewModel.openAppDetails(this@MainActivity, app) },
@@ -166,6 +244,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         try {
+            appWidgetHost.stopListening()
             unregisterReceiver(packageChangeReceiver)
         } catch (e: Exception) {
             // Receiver might not be registered

@@ -1,5 +1,9 @@
 package com.example.ui.home
 
+import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetManager
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,6 +30,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
@@ -49,7 +54,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.example.data.AppModel
+import com.example.data.WorkspaceItem
 import com.example.ui.components.AkoCulturalBackground
 import com.example.ui.components.AlphabetIndexBar
 import com.example.ui.components.AppIconView
@@ -65,6 +72,13 @@ import java.util.Locale
 fun HomeScreen(
     greetingMessage: String,
     favorites: List<AppModel>,
+    allApps: List<AppModel>,
+    widgets: Set<String>,
+    workspaceItems: Set<String>,
+    appWidgetHost: AppWidgetHost,
+    appWidgetManager: AppWidgetManager,
+    onAddWidget: () -> Unit,
+    onRemoveWidget: (Int) -> Unit,
     groupedApps: Map<Char, List<AppModel>>,
     alphabetIndex: List<Char>,
     iconSizeDp: Int,
@@ -213,6 +227,165 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 32.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
+                    // Widgets Section
+                    if (widgets.isNotEmpty()) {
+                        item(key = "widgets_header") {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                widgets.forEach { widgetIdStr ->
+                                    val widgetId = widgetIdStr.toIntOrNull() ?: return@forEach
+                                    val appWidgetInfo = appWidgetManager.getAppWidgetInfo(widgetId)
+                                    if (appWidgetInfo != null) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 20.dp, vertical = 8.dp)
+                                                .shadow(4.dp, RoundedCornerShape(16.dp))
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
+                                                .combinedClickable(
+                                                    onClick = {},
+                                                    onLongClick = { onRemoveWidget(widgetId) }
+                                                )
+                                        ) {
+                                            AndroidView(
+                                                factory = { context ->
+                                                    appWidgetHost.createView(context, widgetId, appWidgetInfo).apply {
+                                                        setAppWidget(widgetId, appWidgetInfo)
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth().padding(8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    item(key = "add_widget_btn") {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            GlassCard(
+                                shape = RoundedCornerShape(20.dp),
+                                elevation = 2.dp,
+                                modifier = Modifier
+                                    .combinedClickable(onClick = onAddWidget)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Add,
+                                        contentDescription = "Ajouter un widget",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Ajouter un widget",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Workspace Section
+                    item(key = "workspace") {
+                        val parsedItems = remember(workspaceItems) {
+                            workspaceItems.mapNotNull { WorkspaceItem.fromPrefString(it) }
+                        }
+                        val pagerState = rememberPagerState(pageCount = { 3 })
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                        ) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(320.dp) // Height for a 4x4 or 4x5 grid
+                            ) { page ->
+                                Column(
+                                    verticalArrangement = Arrangement.SpaceEvenly,
+                                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+                                ) {
+                                    for (row in 0..3) { // 4 rows
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceEvenly,
+                                            modifier = Modifier.fillMaxWidth().weight(1f)
+                                        ) {
+                                            for (col in 0..3) { // 4 columns
+                                                val item = parsedItems.find { it.page == page && it.row == row && it.col == col }
+                                                val appModel = item?.let { wItem -> allApps.find { it.packageName == wItem.packageName } }
+                                                
+                                                Box(
+                                                    contentAlignment = Alignment.Center,
+                                                    modifier = Modifier.weight(1f).fillMaxHeight()
+                                                ) {
+                                                    if (appModel != null) {
+                                                        Column(
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            modifier = Modifier
+                                                                .combinedClickable(
+                                                                    onClick = { onAppClick(appModel) },
+                                                                    onLongClick = { onAppLongClick(appModel) }
+                                                                )
+                                                                .padding(4.dp)
+                                                        ) {
+                                                            AppIconView(
+                                                                packageName = appModel.packageName,
+                                                                drawable = appModel.iconDrawable,
+                                                                size = (iconSizeDp).dp,
+                                                                shape = com.example.ui.theme.getShapeFor(iconShape)
+                                                            )
+                                                            Spacer(modifier = Modifier.height(4.dp))
+                                                            Text(
+                                                                text = appModel.label,
+                                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                                                                color = MaterialTheme.colorScheme.onBackground,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Pager Indicators
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                repeat(pagerState.pageCount) { iteration ->
+                                    val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(2.dp)
+                                            .clip(CircleShape)
+                                            .background(color)
+                                            .size(8.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Favorites Section
                     if (favorites.isNotEmpty()) {
                         item(key = "favorites_header") {
@@ -350,6 +523,7 @@ fun HomeScreen(
                         scope.launch {
                             val targetIndex = calculateSectionIndex(
                                 hasFavorites = favorites.isNotEmpty(),
+                                hasWidgets = widgets.isNotEmpty(),
                                 groupedApps = groupedApps,
                                 targetLetter = selectedLetter
                             )
@@ -369,10 +543,14 @@ fun HomeScreen(
 
 private fun calculateSectionIndex(
     hasFavorites: Boolean,
+    hasWidgets: Boolean,
     groupedApps: Map<Char, List<AppModel>>,
     targetLetter: Char
 ): Int {
-    var index = if (hasFavorites) 1 else 0
+    var index = if (hasWidgets) 1 else 0
+    index += 1 // add widget btn
+    if (hasFavorites) index += 1
+    
     for ((letter, apps) in groupedApps) {
         if (letter == targetLetter) return index
         index += 1 + apps.size
