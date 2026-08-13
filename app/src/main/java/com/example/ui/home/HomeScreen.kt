@@ -40,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,111 +114,116 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.secondary
         )
 
+        val pagerState = rememberPagerState(pageCount = { 3 })
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 16.dp)
         ) {
-            // Header Bar with Glassmorphism Search & Settings
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-            ) {
-                // Glass Search Field Button
+            // Header Bar with Glassmorphism Search & Settings (Only on page 0)
+            if (pagerState.currentPage == 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                ) {
+                    // Glass Search Field Button
+                    GlassCard(
+                        shape = RoundedCornerShape(22.dp),
+                        elevation = 2.dp,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(onClick = onOpenSearch)
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Search,
+                                contentDescription = "Rechercher",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "Cherche… / Dó…",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    GlassCard(
+                        shape = CircleShape,
+                        elevation = 2.dp,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        IconButton(
+                            onClick = onOpenSettings,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Settings,
+                                contentDescription = "Paramètres",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Glass Main Clock Header Card
                 GlassCard(
-                    shape = RoundedCornerShape(22.dp),
-                    elevation = 2.dp,
-                    modifier = Modifier.weight(1f)
+                    shape = RoundedCornerShape(28.dp),
+                    elevation = 6.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .combinedClickable(onClick = onOpenSearch)
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                    Column(
+                        modifier = Modifier.padding(vertical = 20.dp, horizontal = 24.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Search,
-                            contentDescription = "Rechercher",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Cherche… / Dó…",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = greetingMessage,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.secondary
                         )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = currentTime,
+                                style = MaterialTheme.typography.displayMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Text(
+                                text = currentDate,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
-
-                GlassCard(
-                    shape = CircleShape,
-                    elevation = 2.dp,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    IconButton(
-                        onClick = onOpenSettings,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Settings,
-                            contentDescription = "Paramètres",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(20.dp))
+            } else {
+                Spacer(modifier = Modifier.height(20.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Glass Main Clock Header Card
-            GlassCard(
-                shape = RoundedCornerShape(28.dp),
-                elevation = 6.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(vertical = 20.dp, horizontal = 24.dp)
-                ) {
-                    Text(
-                        text = greetingMessage,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = currentTime,
-                            style = MaterialTheme.typography.displayMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Text(
-                            text = currentDate,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 6.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
 
             // Main Apps Scrollable Container with Alphabet Bar
             Box(modifier = Modifier.fillMaxSize()) {
@@ -231,7 +237,6 @@ fun HomeScreen(
                         val parsedItems = remember(workspaceItems) {
                             workspaceItems.mapNotNull { WorkspaceItem.fromPrefString(it) }
                         }
-                        val pagerState = rememberPagerState(pageCount = { 3 })
                         
                         Column(
                             modifier = Modifier
@@ -300,21 +305,21 @@ fun HomeScreen(
                                                                         )
                                                                         .padding(4.dp)
                                                                 ) {
-                                                                    AppIconView(
-                                                                        packageName = appModel.packageName,
-                                                                        drawable = appModel.iconDrawable,
-                                                                        size = (iconSizeDp).dp,
-                                                                        shape = com.example.ui.theme.getShapeFor(iconShape)
-                                                                    )
-                                                                    Spacer(modifier = Modifier.height(4.dp))
-                                                                    Text(
-                                                                        text = appModel.label,
-                                                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
-                                                                        color = MaterialTheme.colorScheme.onBackground,
-                                                                        maxLines = 1,
-                                                                        overflow = TextOverflow.Ellipsis,
-                                                                        textAlign = TextAlign.Center
-                                                                    )
+                                                                AppIconView(
+                                                                    packageName = appModel.packageName,
+                                                                    drawable = appModel.iconDrawable,
+                                                                    size = 64.dp,
+                                                                    shape = com.example.ui.theme.getShapeFor(iconShape)
+                                                                )
+                                                                Spacer(modifier = Modifier.height(8.dp))
+                                                                Text(
+                                                                    text = appModel.label,
+                                                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                                                    color = MaterialTheme.colorScheme.onBackground,
+                                                                    maxLines = 1,
+                                                                    overflow = TextOverflow.Ellipsis,
+                                                                    textAlign = TextAlign.Center
+                                                                )
                                                                 }
                                                             }
                                                         }
@@ -342,39 +347,6 @@ fun HomeScreen(
                                             .background(color)
                                             .size(8.dp)
                                     )
-                                }
-                            }
-                            
-                            // Add Widget Button
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 16.dp)
-                            ) {
-                                GlassCard(
-                                    shape = RoundedCornerShape(20.dp),
-                                    elevation = 2.dp,
-                                    modifier = Modifier
-                                        .combinedClickable(onClick = { onAddWorkspaceItem("", true) })
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Add,
-                                            contentDescription = "Ajouter un widget",
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Ajouter un widget",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
                                 }
                             }
                         }
@@ -510,25 +482,29 @@ fun HomeScreen(
                     }
                 }
 
+                val showAlphabetBar by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
+
                 // Alphabet Index Sidebar on the right
-                AlphabetIndexBar(
-                    alphabet = alphabetIndex,
-                    onLetterSelected = { selectedLetter ->
-                        scope.launch {
-                            val targetIndex = calculateSectionIndex(
-                                hasFavorites = favorites.isNotEmpty(),
-                                groupedApps = groupedApps,
-                                targetLetter = selectedLetter
-                            )
-                            if (targetIndex >= 0) {
-                                listState.animateScrollToItem(targetIndex)
+                if (showAlphabetBar) {
+                    AlphabetIndexBar(
+                        alphabet = alphabetIndex,
+                        onLetterSelected = { selectedLetter ->
+                            scope.launch {
+                                val targetIndex = calculateSectionIndex(
+                                    hasFavorites = favorites.isNotEmpty(),
+                                    groupedApps = groupedApps,
+                                    targetLetter = selectedLetter
+                                )
+                                if (targetIndex >= 0) {
+                                    listState.animateScrollToItem(targetIndex)
+                                }
                             }
-                        }
-                    },
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 6.dp)
-                )
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 6.dp)
+                    )
+                }
             }
         }
     }
