@@ -1,0 +1,6 @@
+{
+  "name": "Akɔ̀",
+  "description": "Un launcher Android minimaliste, doux et ancré dans la culture béninoise.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
