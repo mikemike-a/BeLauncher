@@ -1,6 +1,9 @@
 package com.example.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
@@ -121,6 +125,17 @@ fun AlphabetIndexBar(
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             alphabet.forEach { letter ->
+                val isSelected = activeLetter == letter
+                val scale by animateFloatAsState(
+                    targetValue = if (isSelected) 1.6f else 1.0f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    label = "letterScale"
+                )
+                val color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+                
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.Center
@@ -129,9 +144,10 @@ fun AlphabetIndexBar(
                         text = letter.toString(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold
                         ),
-                        color = MaterialTheme.colorScheme.primary
+                        color = color,
+                        modifier = Modifier.scale(scale)
                     )
                 }
             }
