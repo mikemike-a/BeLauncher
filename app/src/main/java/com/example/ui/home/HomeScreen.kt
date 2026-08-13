@@ -4,6 +4,8 @@ import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -105,21 +107,35 @@ fun HomeScreen(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        AkoCulturalBackground(
-            color = MaterialTheme.colorScheme.secondary
-        )
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.SheetValue
+... (rest of imports)
 
-        val pagerState = rememberPagerState(pageCount = { 3 })
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 16.dp)
-        ) {
+...
+    val scaffoldState = rememberBottomSheetScaffoldState()
+    val scope = rememberCoroutineScope()
+
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
+        sheetContent = {
+            // App List Component
+            LazyColumn {
+                groupedApps.forEach { (letter, appsInGroup) ->
+                    item(key = "header_$letter") {
+                         Text(text = letter.toString())
+                    }
+                    items(appsInGroup) { app ->
+                        Text(text = app.label)
+                    }
+                }
+            }
+        },
+        sheetPeekHeight = 64.dp
+    ) {
+        // Current HomeScreen content inside
+        Box(...)
+    }
             // Header Bar with Glassmorphism Search & Settings (Only on page 0)
             if (pagerState.currentPage == 0) {
                 Row(
@@ -418,64 +434,6 @@ fun HomeScreen(
                                             }
                                         }
                                     }
-                                }
-                            }
-                        }
-                    }
-
-                    // All Apps Grouped by First Letter
-                    groupedApps.forEach { (letter, appsInGroup) ->
-                        item(key = "header_$letter") {
-                            Text(
-                                text = letter.toString(),
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier
-                                    .padding(horizontal = 24.dp)
-                                    .padding(top = 16.dp, bottom = 8.dp)
-                            )
-                        }
-
-                        items(
-                            items = appsInGroup,
-                            key = { it.packageName }
-                        ) { app ->
-                            GlassCard(
-                                shape = RoundedCornerShape(20.dp),
-                                elevation = 2.dp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 4.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .combinedClickable(
-                                            onClick = { onAppClick(app) },
-                                            onLongClick = { onAppLongClick(app) }
-                                        )
-                                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                                ) {
-                                    AppIconView(
-                                        packageName = app.packageName,
-                                        drawable = app.iconDrawable,
-                                        size = iconSizeDp.dp,
-                                        shape = com.example.ui.theme.getShapeFor(iconShape)
-                                    )
-
-                                    Spacer(modifier = Modifier.width(16.dp))
-
-                                    Text(
-                                        text = app.label,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.weight(1f)
-                                    )
                                 }
                             }
                         }
