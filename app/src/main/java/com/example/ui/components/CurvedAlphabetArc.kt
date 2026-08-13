@@ -200,28 +200,6 @@ fun CurvedAlphabetArc(
                 radius = radius + 25.dp.toPx(),
                 center = Offset(centerX, centerY)
             )
-
-            // Draw semi-circle guideline arc
-            drawArc(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        secondaryColor.copy(alpha = 0.5f),
-                        primaryColor.copy(alpha = 0.8f),
-                        secondaryColor.copy(alpha = 0.5f),
-                        Color.Transparent
-                    )
-                ),
-                startAngle = 195f,
-                sweepAngle = 150f,
-                useCenter = false,
-                topLeft = Offset(centerX - radius, centerY - radius),
-                size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2),
-                style = Stroke(
-                    width = 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-                )
-            )
         }
 
         // Swipe up indicator in top-center of arc
