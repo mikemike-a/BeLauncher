@@ -219,7 +219,18 @@ class MainActivity : ComponentActivity() {
                                     iconShape = uiState.preferences.iconShape,
                                     onAppClick = { app -> viewModel.launchApp(this@MainActivity, app) },
                                     onAppLongClick = { app -> viewModel.showQuickActions(app) },
-                                    onOpenSearch = { viewModel.navigateTo(LauncherScreen.DRAWER) },
+                                    onOpenSearch = {
+                                        viewModel.setSearchQuery("")
+                                        viewModel.navigateTo(LauncherScreen.DRAWER)
+                                    },
+                                    onOpenDrawer = { letter ->
+                                        if (letter != null) {
+                                            viewModel.setSearchQuery(letter.toString())
+                                        } else {
+                                            viewModel.setSearchQuery("")
+                                        }
+                                        viewModel.navigateTo(LauncherScreen.DRAWER)
+                                    },
                                     onOpenSettings = { viewModel.navigateTo(LauncherScreen.SETTINGS) }
                                 )
                             }

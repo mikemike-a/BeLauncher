@@ -37,19 +37,40 @@ jobs:
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug
 
+    - name: Rename APK with Version
+      id: apk_info
+      run: |
+        VERSION_NAME=$(grep 'versionName = ' app/build.gradle.kts | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+        if [ -z "$VERSION_NAME" ]; then
+          VERSION_NAME="1.0"
+        fi
+        echo "version=$VERSION_NAME" >> $GITHUB_OUTPUT
+        
+        if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          TAG_NAME="${{ github.ref_name }}"
+          APK_NAME="Ako-${TAG_NAME}.apk"
+        else
+          APK_NAME="Ako-v${VERSION_NAME}.apk"
+        fi
+        
+        mkdir -p build-output
+        cp app/build/outputs/apk/debug/*.apk "build-output/${APK_NAME}"
+        echo "apk_name=$APK_NAME" >> $GITHUB_OUTPUT
+        echo "apk_path=build-output/${APK_NAME}" >> $GITHUB_OUTPUT
+
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: App-APK
-        path: app/build/outputs/apk/debug/*.apk
+        name: Ako-v${{ steps.apk_info.outputs.version }}
+        path: ${{ steps.apk_info.outputs.apk_path }}
 
     - name: Publish to GitHub Releases
       if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v2
       with:
-        files: app/build/outputs/apk/debug/*.apk
+        files: ${{ steps.apk_info.outputs.apk_path }}
         tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'latest' }}
-        name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'Continuous Build' }}
+        name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('Ako v{0}', steps.apk_info.outputs.version) }}
         draft: false
         prerelease: false
       env:
