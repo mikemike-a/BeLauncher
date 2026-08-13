@@ -1,8 +1,7 @@
 package com.example.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,15 +32,21 @@ fun AlphabetIndexBar(
             .width(28.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .pointerInput(alphabet) {
+                detectDragGestures { change, _ ->
+                    val y = change.position.y
+                    val itemHeight = size.height / alphabet.size
+                    val index = (y / itemHeight).toInt().coerceIn(0, alphabet.size - 1)
+                    onLetterSelected(alphabet[index])
+                }
+            },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceEvenly
     ) {
         alphabet.forEach { letter ->
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onLetterSelected(letter) },
+                modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
