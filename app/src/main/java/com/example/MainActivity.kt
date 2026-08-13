@@ -102,6 +102,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val defaultLauncherLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { _ ->
+        // No specific action needed after user sets (or declines to set) default
+    }
+
+    private fun requestDefaultLauncherRole() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(android.app.role.RoleManager::class.java)
+            if (roleManager != null && roleManager.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME) && !roleManager.isRoleHeld(android.app.role.RoleManager.ROLE_HOME)) {
+                val intent = roleManager.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME)
+                defaultLauncherLauncher.launch(intent)
+            }
+        }
+    }
+
     private val packageChangeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             viewModel.reloadApps()
@@ -146,6 +160,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                requestDefaultLauncherRole()
+            }
 
             AkoTheme(
                 themeMode = uiState.preferences.themeMode,
