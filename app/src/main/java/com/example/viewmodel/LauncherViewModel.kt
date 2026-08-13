@@ -240,13 +240,39 @@ class LauncherViewModel(
             val currentItems = prefs.workspaceItems.mapNotNull { 
                 com.example.data.WorkspaceItem.fromPrefString(it)
             }
-            // Find first empty slot on page 0 (or up to page 2). Grid is 4x5.
+            // Find first empty slot on page 0 (or up to page 2). Grid is 4x4.
             var foundSlot: com.example.data.WorkspaceItem? = null
             for (page in 0..2) {
-                for (row in 0..4) {
+                for (row in 0..3) {
                     for (col in 0..3) {
                         if (currentItems.none { it.page == page && it.row == row && it.col == col }) {
-                            foundSlot = com.example.data.WorkspaceItem(page, row, col, app.packageName)
+                            foundSlot = com.example.data.WorkspaceItem(page, row, col, app.packageName, false)
+                            break
+                        }
+                    }
+                    if (foundSlot != null) break
+                }
+                if (foundSlot != null) break
+            }
+            if (foundSlot != null) {
+                preferences.addWorkspaceItem(foundSlot)
+            }
+        }
+    }
+
+    fun addWidgetToWorkspace(widgetId: Int) {
+        viewModelScope.launch {
+            val prefs = uiState.value.preferences
+            val currentItems = prefs.workspaceItems.mapNotNull { 
+                com.example.data.WorkspaceItem.fromPrefString(it)
+            }
+            // Find first empty slot on page 0 (or up to page 2). Grid is 4x4.
+            var foundSlot: com.example.data.WorkspaceItem? = null
+            for (page in 0..2) {
+                for (row in 0..3) {
+                    for (col in 0..3) {
+                        if (currentItems.none { it.page == page && it.row == row && it.col == col }) {
+                            foundSlot = com.example.data.WorkspaceItem(page, row, col, widgetId.toString(), true)
                             break
                         }
                     }
@@ -265,7 +291,7 @@ class LauncherViewModel(
             val prefs = uiState.value.preferences
             val itemToRemove = prefs.workspaceItems.mapNotNull { 
                 com.example.data.WorkspaceItem.fromPrefString(it)
-            }.find { it.packageName == app.packageName }
+            }.find { it.identifier == app.packageName && !it.isWidget }
             
             if (itemToRemove != null) {
                 preferences.removeWorkspaceItem(itemToRemove.page, itemToRemove.row, itemToRemove.col)

@@ -71,7 +71,7 @@ class MainActivity : ComponentActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             val appWidgetId = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1) ?: -1
             if (appWidgetId != -1) {
-                viewModel.addWidget(appWidgetId)
+                viewModel.addWidgetToWorkspace(appWidgetId)
             }
         } else {
             val appWidgetId = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
@@ -98,7 +98,7 @@ class MainActivity : ComponentActivity() {
             }
             configureWidgetLauncher.launch(intent)
         } else {
-            viewModel.addWidget(appWidgetId)
+            viewModel.addWidgetToWorkspace(appWidgetId)
         }
     }
 
@@ -192,14 +192,26 @@ class MainActivity : ComponentActivity() {
                                     greetingMessage = uiState.greetingMessage,
                                     favorites = uiState.favoriteApps,
                                     allApps = uiState.allApps,
-                                    widgets = uiState.preferences.widgets,
                                     workspaceItems = uiState.preferences.workspaceItems,
                                     appWidgetHost = appWidgetHost,
                                     appWidgetManager = appWidgetManager,
-                                    onAddWidget = { selectWidget() },
-                                    onRemoveWidget = { widgetId -> 
-                                        viewModel.removeWidget(widgetId)
-                                        appWidgetHost.deleteAppWidgetId(widgetId)
+                                    onAddWorkspaceItem = { _, isWidget ->
+                                        if (isWidget) {
+                                            selectWidget()
+                                        }
+                                    },
+                                    onRemoveWorkspaceItem = { page, row, col -> 
+                                        val item = uiState.preferences.workspaceItems.mapNotNull { 
+                                            com.example.data.WorkspaceItem.fromPrefString(it)
+                                        }.find { it.page == page && it.row == row && it.col == col }
+                                        
+                                        if (item?.isWidget == true) {
+                                            val widgetId = item.identifier.toIntOrNull()
+                                            if (widgetId != null) {
+                                                appWidgetHost.deleteAppWidgetId(widgetId)
+                                            }
+                                        }
+                                        viewModel.removeWorkspaceItem(page, row, col)
                                     },
                                     groupedApps = uiState.groupedApps,
                                     alphabetIndex = uiState.alphabetIndex,
