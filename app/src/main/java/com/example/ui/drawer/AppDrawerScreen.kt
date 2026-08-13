@@ -49,6 +49,7 @@ fun AppDrawerScreen(
     onSearchQueryChange: (String) -> Unit,
     filteredApps: List<AppModel>,
     iconSizeDp: Int,
+    iconShape: com.example.ui.theme.AkoIconShape,
     onBack: () -> Unit,
     onAppClick: (AppModel) -> Unit,
     onAppLongClick: (AppModel) -> Unit,
@@ -184,7 +185,8 @@ fun AppDrawerScreen(
                                 AppIconView(
                                     packageName = app.packageName,
                                     drawable = app.iconDrawable,
-                                    size = iconSizeDp.dp
+                                    size = iconSizeDp.dp,
+                                    shape = com.example.ui.theme.getShapeFor(iconShape)
                                 )
 
                                 Spacer(modifier = Modifier.width(16.dp))

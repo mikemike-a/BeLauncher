@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.ui.theme.AkoIconShape
 import com.example.ui.theme.AkoThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,6 +18,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "ak
 
 data class AkoUserPreferences(
     val themeMode: AkoThemeMode = AkoThemeMode.COTONOU,
+    val iconShape: AkoIconShape = AkoIconShape.SQUIRCLE,
     val iconSizeDp: Int = 56,
     val favoritePackages: Set<String> = emptySet(),
     val hiddenPackages: Set<String> = emptySet(),
@@ -28,6 +30,7 @@ class LauncherPreferences(private val context: Context) {
 
     private object Keys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val ICON_SHAPE = stringPreferencesKey("icon_shape")
         val ICON_SIZE = intPreferencesKey("icon_size_dp")
         val FAVORITES = stringSetPreferencesKey("favorite_packages")
         val HIDDEN = stringSetPreferencesKey("hidden_packages")
@@ -42,6 +45,14 @@ class LauncherPreferences(private val context: Context) {
         } catch (e: Exception) {
             AkoThemeMode.COTONOU
         }
+        
+        val shapeName = prefs[Keys.ICON_SHAPE] ?: AkoIconShape.SQUIRCLE.name
+        val iconShape = try {
+            AkoIconShape.valueOf(shapeName)
+        } catch (e: Exception) {
+            AkoIconShape.SQUIRCLE
+        }
+        
         val iconSize = prefs[Keys.ICON_SIZE] ?: 56
         val favorites = prefs[Keys.FAVORITES] ?: emptySet()
         val hidden = prefs[Keys.HIDDEN] ?: emptySet()
@@ -50,12 +61,19 @@ class LauncherPreferences(private val context: Context) {
 
         AkoUserPreferences(
             themeMode = themeMode,
+            iconShape = iconShape,
             iconSizeDp = iconSize,
             favoritePackages = favorites,
             hiddenPackages = hidden,
             enableLockScreen = lockScreen,
             isDarkModeEnabled = darkMode
         )
+    }
+
+    suspend fun setIconShape(shape: AkoIconShape) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ICON_SHAPE] = shape.name
+        }
     }
 
     suspend fun setDarkMode(enabled: Boolean) {

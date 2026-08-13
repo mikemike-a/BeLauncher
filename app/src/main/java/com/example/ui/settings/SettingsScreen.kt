@@ -58,6 +58,7 @@ fun SettingsScreen(
     preferences: AkoUserPreferences,
     onThemeSelected: (AkoThemeMode) -> Unit,
     onIconSizeSelected: (Int) -> Unit,
+    onIconShapeSelected: (com.example.ui.theme.AkoIconShape) -> Unit,
     onLockScreenToggle: (Boolean) -> Unit,
     onDarkModeToggle: (Boolean) -> Unit,
     onBack: () -> Unit,
@@ -250,11 +251,76 @@ fun SettingsScreen(
 
             // Glass Icon Size Section
             Text(
-                text = "Taille des icônes",
+                text = "Apparence des icônes",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
             )
+
+            // Icon Shape selector
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                com.example.ui.theme.AkoIconShape.entries.forEach { shapeOption ->
+                    val isSelected = preferences.iconShape == shapeOption
+                    
+                    GlassCard(
+                        shape = RoundedCornerShape(22.dp),
+                        elevation = if (isSelected) 4.dp else 2.dp,
+                        borderColor = if (isSelected) MaterialTheme.colorScheme.secondary else Color.White.copy(alpha = 0.4f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onIconShapeSelected(shapeOption) }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(com.example.ui.theme.getShapeFor(shapeOption))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Home,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = shapeOption.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = shapeOption.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = "Sélectionné",
+                                    tint = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             GlassCard(
                 shape = RoundedCornerShape(22.dp),

@@ -192,6 +192,12 @@ class LauncherViewModel(
         }
     }
 
+    fun setIconShape(shape: com.example.ui.theme.AkoIconShape) {
+        viewModelScope.launch {
+            preferences.setIconShape(shape)
+        }
+    }
+
     fun setLockScreenEnabled(enabled: Boolean) {
         viewModelScope.launch {
             preferences.setEnableLockScreen(enabled)

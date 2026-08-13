@@ -111,6 +111,7 @@ class MainActivity : ComponentActivity() {
                                     groupedApps = uiState.groupedApps,
                                     alphabetIndex = uiState.alphabetIndex,
                                     iconSizeDp = uiState.preferences.iconSizeDp,
+                                    iconShape = uiState.preferences.iconShape,
                                     onAppClick = { app -> viewModel.launchApp(this@MainActivity, app) },
                                     onAppLongClick = { app -> viewModel.showQuickActions(app) },
                                     onOpenSearch = { viewModel.navigateTo(LauncherScreen.DRAWER) },
@@ -123,6 +124,7 @@ class MainActivity : ComponentActivity() {
                                     onSearchQueryChange = { query -> viewModel.setSearchQuery(query) },
                                     filteredApps = uiState.searchFilteredApps,
                                     iconSizeDp = uiState.preferences.iconSizeDp,
+                                    iconShape = uiState.preferences.iconShape,
                                     onBack = { viewModel.navigateTo(LauncherScreen.HOME) },
                                     onAppClick = { app -> viewModel.launchApp(this@MainActivity, app) },
                                     onAppLongClick = { app -> viewModel.showQuickActions(app) }
@@ -133,6 +135,7 @@ class MainActivity : ComponentActivity() {
                                     preferences = uiState.preferences,
                                     onThemeSelected = { mode -> viewModel.setThemeMode(mode) },
                                     onIconSizeSelected = { size -> viewModel.setIconSize(size) },
+                                    onIconShapeSelected = { shape -> viewModel.setIconShape(shape) },
                                     onLockScreenToggle = { enabled -> viewModel.setLockScreenEnabled(enabled) },
                                     onDarkModeToggle = { enabled -> viewModel.setDarkModeEnabled(enabled) },
                                     onBack = { viewModel.navigateTo(LauncherScreen.HOME) }
@@ -145,6 +148,7 @@ class MainActivity : ComponentActivity() {
                     uiState.quickActionApp?.let { app ->
                         QuickActionsPopup(
                             app = app,
+                            iconShape = uiState.preferences.iconShape,
                             onDismiss = { viewModel.dismissQuickActions() },
                             onLaunch = { viewModel.launchApp(this@MainActivity, app) },
                             onToggleFavorite = { viewModel.toggleFavorite(app) },

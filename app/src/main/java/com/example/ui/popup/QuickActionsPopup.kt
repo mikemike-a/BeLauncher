@@ -46,6 +46,7 @@ import com.example.ui.components.GlassCard
 @Composable
 fun QuickActionsPopup(
     app: AppModel,
+    iconShape: com.example.ui.theme.AkoIconShape,
     onDismiss: () -> Unit,
     onLaunch: () -> Unit,
     onToggleFavorite: () -> Unit,
@@ -75,7 +76,7 @@ fun QuickActionsPopup(
                     packageName = app.packageName,
                     drawable = app.iconDrawable,
                     size = 58.dp,
-                    shape = RoundedCornerShape(20.dp)
+                    shape = com.example.ui.theme.getShapeFor(iconShape)
                 )
 
                 Spacer(modifier = Modifier.width(16.dp))

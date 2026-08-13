@@ -68,6 +68,7 @@ fun HomeScreen(
     groupedApps: Map<Char, List<AppModel>>,
     alphabetIndex: List<Char>,
     iconSizeDp: Int,
+    iconShape: com.example.ui.theme.AkoIconShape,
     onAppClick: (AppModel) -> Unit,
     onAppLongClick: (AppModel) -> Unit,
     onOpenSearch: () -> Unit,
@@ -262,7 +263,7 @@ fun HomeScreen(
                                                     packageName = app.packageName,
                                                     drawable = app.iconDrawable,
                                                     size = (iconSizeDp + 10).dp,
-                                                    shape = RoundedCornerShape(22.dp)
+                                                    shape = com.example.ui.theme.getShapeFor(iconShape)
                                                 )
                                                 Spacer(modifier = Modifier.height(8.dp))
                                                 Text(
@@ -322,7 +323,8 @@ fun HomeScreen(
                                     AppIconView(
                                         packageName = app.packageName,
                                         drawable = app.iconDrawable,
-                                        size = iconSizeDp.dp
+                                        size = iconSizeDp.dp,
+                                        shape = com.example.ui.theme.getShapeFor(iconShape)
                                     )
 
                                     Spacer(modifier = Modifier.width(16.dp))
