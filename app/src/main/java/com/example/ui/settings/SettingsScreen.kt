@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +47,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.data.AkoUserPreferences
+import com.example.data.AppModel
 import com.example.ui.components.AkoCulturalBackground
+import com.example.ui.components.AppIconView
 import com.example.ui.components.GlassCard
 import com.example.ui.theme.AbomeyPrimary
 import com.example.ui.theme.AkoThemeMode
@@ -56,11 +59,13 @@ import com.example.ui.theme.OuidahPrimary
 @Composable
 fun SettingsScreen(
     preferences: AkoUserPreferences,
+    allApps: List<AppModel>,
     onThemeSelected: (AkoThemeMode) -> Unit,
     onIconSizeSelected: (Int) -> Unit,
     onIconShapeSelected: (com.example.ui.theme.AkoIconShape) -> Unit,
     onLockScreenToggle: (Boolean) -> Unit,
     onDarkModeToggle: (Boolean) -> Unit,
+    onToggleHideApp: (AppModel) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -455,6 +460,92 @@ fun SettingsScreen(
                             checkedTrackColor = MaterialTheme.colorScheme.secondary
                         )
                     )
+                }
+            }
+
+            // Privacy Section (Hidden Apps)
+            Text(
+                text = "Confidentialité",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+            )
+
+            GlassCard(
+                shape = RoundedCornerShape(22.dp),
+                elevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                Column(modifier = Modifier.padding(18.dp)) {
+                    Text(
+                        text = "Applications masquées",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "Les applications masquées n'apparaissent pas dans le tiroir ni sur l'écran d'accueil.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    val hiddenApps = allApps.filter { it.packageName in preferences.hiddenPackages }
+
+                    if (hiddenApps.isEmpty()) {
+                        Text(
+                            text = "Aucune application masquée.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            hiddenApps.forEach { app ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    AppIconView(
+                                        packageName = app.packageName,
+                                        drawable = app.iconDrawable,
+                                        size = 40.dp,
+                                        shape = com.example.ui.theme.getShapeFor(preferences.iconShape)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = app.label,
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            text = app.packageName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = { onToggleHideApp(app) }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Visibility,
+                                            contentDescription = "Afficher l'application",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

@@ -249,11 +249,13 @@ class MainActivity : ComponentActivity() {
                             LauncherScreen.SETTINGS -> {
                                 SettingsScreen(
                                     preferences = uiState.preferences,
+                                    allApps = uiState.allApps,
                                     onThemeSelected = { mode -> viewModel.setThemeMode(mode) },
                                     onIconSizeSelected = { size -> viewModel.setIconSize(size) },
                                     onIconShapeSelected = { shape -> viewModel.setIconShape(shape) },
                                     onLockScreenToggle = { enabled -> viewModel.setLockScreenEnabled(enabled) },
                                     onDarkModeToggle = { enabled -> viewModel.setDarkModeEnabled(enabled) },
+                                    onToggleHideApp = { app -> viewModel.toggleHideApp(app) },
                                     onBack = { viewModel.navigateTo(LauncherScreen.HOME) }
                                 )
                             }
