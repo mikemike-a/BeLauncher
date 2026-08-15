@@ -59,7 +59,9 @@ import com.example.data.WorkspaceItem
 import com.example.ui.components.AkoCulturalBackground
 import com.example.ui.components.AppIconView
 import com.example.ui.components.CurvedAlphabetArc
+import com.example.ui.components.FloatingBubbleField
 import com.example.ui.components.GlassCard
+import com.example.ui.components.selectDefaultBubbleApps
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -103,6 +105,10 @@ fun HomeScreen(
         }
     }
 
+    val bubbleApps = remember(allApps, favorites) {
+        selectDefaultBubbleApps(allApps, favorites)
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -136,64 +142,7 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(top = 16.dp)
         ) {
-            // Header Bar with Glassmorphism Search & Settings (Only on page 0)
             if (pagerState.currentPage == 0) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                ) {
-                    // Glass Search Field Button
-                    GlassCard(
-                        shape = RoundedCornerShape(22.dp),
-                        elevation = 2.dp,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(onClick = onOpenSearch)
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Search,
-                                contentDescription = "Rechercher",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "Cherche… / Dó…",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    GlassCard(
-                        shape = CircleShape,
-                        elevation = 2.dp,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        IconButton(
-                            onClick = onOpenSettings,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Settings,
-                                contentDescription = "Paramètres",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 // Glass Main Clock Header Card
                 GlassCard(
                     shape = RoundedCornerShape(28.dp),
@@ -257,12 +206,23 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .weight(1f)
                 ) { page ->
-                    Column(
-                        verticalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
+                    if (page == 0) {
+                        FloatingBubbleField(
+                            apps = bubbleApps,
+                            iconShape = iconShape,
+                            onAppClick = onAppClick,
+                            onAppLongClick = onAppLongClick,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        )
+                    } else {
+                        Column(
+                            verticalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
                         for (row in 0..3) { // 4 rows
                             Row(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -356,6 +316,7 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
 
                 // Pager Indicators
                 Row(
