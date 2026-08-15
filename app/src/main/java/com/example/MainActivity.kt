@@ -256,6 +256,7 @@ class MainActivity : ComponentActivity() {
                                     onLockScreenToggle = { enabled -> viewModel.setLockScreenEnabled(enabled) },
                                     onDarkModeToggle = { enabled -> viewModel.setDarkModeEnabled(enabled) },
                                     onToggleHideApp = { app -> viewModel.toggleHideApp(app) },
+                                    onUpdateHiddenAppsPassword = { password -> viewModel.setHiddenAppsPassword(password) },
                                     onBack = { viewModel.navigateTo(LauncherScreen.HOME) }
                                 )
                             }

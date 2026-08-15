@@ -69,12 +69,31 @@ class LauncherViewModel(
 
         val alphabet = grouped.keys.toList()
 
-        val filtered = if (query.isBlank()) {
-            visible
+        val password = prefs.hiddenAppsPassword.ifBlank { "1234" }
+        val trimmedQuery = query.trim()
+        val isPasswordEntered = trimmedQuery.equals(password, ignoreCase = true)
+        val isPasswordWithSearch = trimmedQuery.startsWith("$password ", ignoreCase = true)
+
+        val filtered = if (isPasswordEntered) {
+            apps.filter { it.isHidden }
+        } else if (isPasswordWithSearch) {
+            val realQuery = trimmedQuery.substring(password.length).trim()
+            if (realQuery.isBlank()) {
+                apps.filter { it.isHidden }
+            } else {
+                apps.filter { it.isHidden }.filter {
+                    it.label.contains(realQuery, ignoreCase = true) ||
+                    it.packageName.contains(realQuery, ignoreCase = true)
+                }
+            }
         } else {
-            visible.filter {
-                it.label.contains(query, ignoreCase = true) ||
-                it.packageName.contains(query, ignoreCase = true)
+            if (query.isBlank()) {
+                visible
+            } else {
+                visible.filter {
+                    it.label.contains(query, ignoreCase = true) ||
+                    it.packageName.contains(query, ignoreCase = true)
+                }
             }
         }
 
@@ -207,6 +226,12 @@ class LauncherViewModel(
     fun setDarkModeEnabled(enabled: Boolean) {
         viewModelScope.launch {
             preferences.setDarkMode(enabled)
+        }
+    }
+
+    fun setHiddenAppsPassword(password: String) {
+        viewModelScope.launch {
+            preferences.setHiddenAppsPassword(password)
         }
     }
 

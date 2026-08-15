@@ -25,7 +25,8 @@ data class AkoUserPreferences(
     val widgets: Set<String> = emptySet(),
     val workspaceItems: Set<String> = emptySet(),
     val enableLockScreen: Boolean = true,
-    val isDarkModeEnabled: Boolean = false
+    val isDarkModeEnabled: Boolean = false,
+    val hiddenAppsPassword: String = "1234"
 )
 
 class LauncherPreferences(private val context: Context) {
@@ -40,6 +41,7 @@ class LauncherPreferences(private val context: Context) {
         val WORKSPACE_ITEMS = stringSetPreferencesKey("workspace_items")
         val LOCK_SCREEN = booleanPreferencesKey("enable_lock_screen")
         val DARK_MODE = booleanPreferencesKey("enable_dark_mode")
+        val HIDDEN_PASSWORD = stringPreferencesKey("hidden_apps_password")
     }
 
     val preferencesFlow: Flow<AkoUserPreferences> = context.dataStore.data.map { prefs ->
@@ -64,6 +66,7 @@ class LauncherPreferences(private val context: Context) {
         val workspaceItems = prefs[Keys.WORKSPACE_ITEMS] ?: emptySet()
         val lockScreen = prefs[Keys.LOCK_SCREEN] ?: true
         val darkMode = prefs[Keys.DARK_MODE] ?: false
+        val hiddenPassword = prefs[Keys.HIDDEN_PASSWORD] ?: "1234"
 
         AkoUserPreferences(
             themeMode = themeMode,
@@ -74,7 +77,8 @@ class LauncherPreferences(private val context: Context) {
             widgets = widgets,
             workspaceItems = workspaceItems,
             enableLockScreen = lockScreen,
-            isDarkModeEnabled = darkMode
+            isDarkModeEnabled = darkMode,
+            hiddenAppsPassword = hiddenPassword
         )
     }
 
@@ -159,6 +163,12 @@ class LauncherPreferences(private val context: Context) {
             } else {
                 prefs[Keys.HIDDEN] = current + packageName
             }
+        }
+    }
+
+    suspend fun setHiddenAppsPassword(password: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.HIDDEN_PASSWORD] = password
         }
     }
 
