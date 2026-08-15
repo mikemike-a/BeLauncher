@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetHost
 import android.appwidget.AppWidgetManager
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Wallpaper
+import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +42,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,7 +65,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(
     greetingMessage: String,
@@ -81,6 +90,7 @@ fun HomeScreen(
     var currentTime by remember { mutableStateOf("") }
     var currentDate by remember { mutableStateOf("") }
     val pagerState = rememberPagerState(pageCount = { 3 })
+    var showOptionsMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val timeFormat = SimpleDateFormat("HH:mm", Locale.FRENCH)
@@ -97,6 +107,18 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .pointerInteropFilter { motionEvent ->
+                if (motionEvent.action == android.view.MotionEvent.ACTION_DOWN) {
+                    if (motionEvent.buttonState == android.view.MotionEvent.BUTTON_SECONDARY) {
+                        showOptionsMenu = true
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            }
             .pointerInput(Unit) {
                 detectVerticalDragGestures { _, dragAmount ->
                     if (dragAmount < -25f) {
@@ -256,6 +278,16 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .weight(1f)
                                             .fillMaxHeight()
+                                            .then(
+                                                if (item == null) {
+                                                    Modifier.combinedClickable(
+                                                        onClick = {},
+                                                        onLongClick = { showOptionsMenu = true }
+                                                    )
+                                                } else {
+                                                    Modifier
+                                                }
+                                            )
                                     ) {
                                         if (item != null) {
                                             if (item.isWidget) {
@@ -357,6 +389,135 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
+            )
+        }
+
+        if (showOptionsMenu) {
+            val context = LocalContext.current
+            WorkspaceOptionsMenu(
+                onAddWidget = {
+                    onAddWorkspaceItem("", true)
+                },
+                onChangeWallpaper = {
+                    try {
+                        val intent = Intent(Intent.ACTION_SET_WALLPAPER)
+                        context.startActivity(Intent.createChooser(intent, "Choisir un fond d'écran"))
+                    } catch (e: Exception) {
+                        android.widget.Toast.makeText(context, "Impossible d'ouvrir le sélecteur", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onOpenSettings = onOpenSettings,
+                onDismiss = { showOptionsMenu = false }
+            )
+        }
+    }
+}
+
+@Composable
+fun WorkspaceOptionsMenu(
+    onAddWidget: () -> Unit,
+    onChangeWallpaper: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.45f))
+            .clickable(onClick = onDismiss),
+        contentAlignment = Alignment.Center
+    ) {
+        GlassCard(
+            shape = RoundedCornerShape(28.dp),
+            elevation = 8.dp,
+            modifier = Modifier
+                .width(280.dp)
+                .clickable(enabled = false, onClick = {}) // prevent click propagation
+                .padding(16.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Options de l'écran",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // Button 1: Ajouter un widget
+                MenuOptionItem(
+                    icon = Icons.Rounded.Widgets,
+                    label = "Ajouter un widget",
+                    onClick = {
+                        onDismiss()
+                        onAddWidget()
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Button 2: Changer le fond d'écran
+                MenuOptionItem(
+                    icon = Icons.Rounded.Wallpaper,
+                    label = "Changer le papier peint",
+                    onClick = {
+                        onDismiss()
+                        onChangeWallpaper()
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Button 3: Paramètres du lanceur
+                MenuOptionItem(
+                    icon = Icons.Rounded.Settings,
+                    label = "Paramètres",
+                    onClick = {
+                        onDismiss()
+                        onOpenSettings()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MenuOptionItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        shape = RoundedCornerShape(16.dp),
+        elevation = 2.dp,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
