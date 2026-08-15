@@ -70,7 +70,6 @@ fun SettingsScreen(
     onIconSizeSelected: (Int) -> Unit,
     onIconShapeSelected: (com.example.ui.theme.AkoIconShape) -> Unit,
     onLockScreenToggle: (Boolean) -> Unit,
-    onDarkModeToggle: (Boolean) -> Unit,
     onToggleHideApp: (AppModel) -> Unit,
     onUpdateHiddenAppsPassword: (String) -> Unit,
     onBack: () -> Unit,
@@ -381,47 +380,6 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
             )
-
-            // Glass Dark Mode Card
-            GlassCard(
-                shape = RoundedCornerShape(22.dp),
-                elevation = 2.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.DarkMode,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    Text(
-                        text = "Mode sombre",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Switch(
-                        checked = preferences.isDarkModeEnabled,
-                        onCheckedChange = onDarkModeToggle,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
-                            checkedTrackColor = MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                }
-            }
 
             // Glass Lock Screen Card
             GlassCard(

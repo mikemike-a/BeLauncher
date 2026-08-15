@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -167,7 +168,7 @@ class MainActivity : ComponentActivity() {
 
             AkoTheme(
                 themeMode = uiState.preferences.themeMode,
-                darkTheme = uiState.preferences.isDarkModeEnabled
+                darkTheme = isSystemInDarkTheme()
             ) {
                 Scaffold(
                     modifier = Modifier
@@ -254,7 +255,6 @@ class MainActivity : ComponentActivity() {
                                     onIconSizeSelected = { size -> viewModel.setIconSize(size) },
                                     onIconShapeSelected = { shape -> viewModel.setIconShape(shape) },
                                     onLockScreenToggle = { enabled -> viewModel.setLockScreenEnabled(enabled) },
-                                    onDarkModeToggle = { enabled -> viewModel.setDarkModeEnabled(enabled) },
                                     onToggleHideApp = { app -> viewModel.toggleHideApp(app) },
                                     onUpdateHiddenAppsPassword = { password -> viewModel.setHiddenAppsPassword(password) },
                                     onBack = { viewModel.navigateTo(LauncherScreen.HOME) }
