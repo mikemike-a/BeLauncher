@@ -41,8 +41,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -65,6 +67,7 @@ fun CurvedAlphabetArc(
     onSwipeUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     val displayLetters = remember(alphabet) {
         if (alphabet.isNotEmpty()) alphabet else ('A'..'Z').toList()
     }
@@ -120,7 +123,11 @@ fun CurvedAlphabetArc(
                         if (angleDeg in 15f..165f) {
                             val t = ((155f - angleDeg) / (155f - 25f)).coerceIn(0f, 1f)
                             val index = (t * (displayLetters.size - 1)).roundToInt().coerceIn(0, displayLetters.size - 1)
-                            activeLetter = displayLetters[index]
+                            val newLetter = displayLetters[index]
+                            if (activeLetter != newLetter) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
+                            activeLetter = newLetter
                             activePosition = offset
                         }
                     },
@@ -171,7 +178,11 @@ fun CurvedAlphabetArc(
                         if (angleDeg in 15f..165f) {
                             val t = ((155f - angleDeg) / (155f - 25f)).coerceIn(0f, 1f)
                             val index = (t * (displayLetters.size - 1)).roundToInt().coerceIn(0, displayLetters.size - 1)
-                            activeLetter = displayLetters[index]
+                            val newLetter = displayLetters[index]
+                            if (activeLetter != newLetter) {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            }
+                            activeLetter = newLetter
                             activePosition = pos
                         }
                     }

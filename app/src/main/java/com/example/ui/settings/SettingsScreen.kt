@@ -60,6 +60,8 @@ import com.example.ui.components.GlassCard
 import com.example.ui.theme.AbomeyPrimary
 import com.example.ui.theme.AkoThemeMode
 import com.example.ui.theme.CotonouPrimary
+import com.example.ui.theme.GrandPopoPrimary
+import com.example.ui.theme.NatitingouPrimary
 import com.example.ui.theme.OuidahPrimary
 
 @Composable
@@ -209,6 +211,8 @@ fun SettingsScreen(
                         AkoThemeMode.COTONOU -> CotonouPrimary
                         AkoThemeMode.ABOMEY -> AbomeyPrimary
                         AkoThemeMode.OUIDAH -> OuidahPrimary
+                        AkoThemeMode.NATITINGOU -> NatitingouPrimary
+                        AkoThemeMode.GRAND_POPO -> GrandPopoPrimary
                     }
 
                     GlassCard(

@@ -30,8 +30,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -47,6 +49,7 @@ fun AlphabetIndexBar(
 ) {
     if (alphabet.isEmpty()) return
 
+    val haptic = LocalHapticFeedback.current
     var activeLetter by remember { mutableStateOf<Char?>(null) }
     var activeIndex by remember { mutableStateOf(-1) }
     var columnHeight by remember { mutableStateOf(0f) }
@@ -105,6 +108,7 @@ fun AlphabetIndexBar(
                         var index = (down.position.y / itemHeight).toInt().coerceIn(0, alphabet.size - 1)
                         activeLetter = alphabet[index]
                         activeIndex = index
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         onLetterSelected(alphabet[index])
                         
                         do {
@@ -115,6 +119,7 @@ fun AlphabetIndexBar(
                                 if (activeLetter != alphabet[index]) {
                                     activeLetter = alphabet[index]
                                     activeIndex = index
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     onLetterSelected(alphabet[index])
                                 }
                             }

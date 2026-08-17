@@ -11,6 +11,8 @@ import androidx.compose.ui.unit.dp
 
 enum class AkoIconShape(val title: String, val description: String) {
     SQUIRCLE("Classique", "Carré aux bords arrondis standards"),
+    CIRCLE("Cercle", "Icône ronde épurée et moderne"),
+    TEARDROP("Goutte", "Forme dynamique et douce"),
     CAURI("Cauri", "Forme organique inspirée des coquillages cauris"),
     ASASE("Asase", "Forme asymétrique de feuille/terre"),
     SHIELD("Bouclier", "Forme géométrique de protection")
@@ -19,6 +21,8 @@ enum class AkoIconShape(val title: String, val description: String) {
 fun getShapeFor(akoIconShape: AkoIconShape): Shape {
     return when (akoIconShape) {
         AkoIconShape.SQUIRCLE -> RoundedCornerShape(20.dp)
+        AkoIconShape.CIRCLE -> androidx.compose.foundation.shape.CircleShape
+        AkoIconShape.TEARDROP -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 24.dp, bottomEnd = 6.dp)
         AkoIconShape.CAURI -> CauriShape()
         AkoIconShape.ASASE -> AsaseShape()
         AkoIconShape.SHIELD -> ShieldShape()

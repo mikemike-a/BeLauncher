@@ -106,6 +106,60 @@ fun AkoTheme(
             surfaceVariant = Color(0xFFEFE8DF),
             onSurfaceVariant = OuidahTextSecondary
         )
+        AkoThemeMode.NATITINGOU -> if (darkTheme) darkColorScheme(
+            primary = NatitingouPrimaryDark,
+            onPrimary = NatitingouTextPrimaryDark,
+            secondary = NatitingouSecondaryDark,
+            onSecondary = NatitingouTextPrimaryDark,
+            tertiary = NatitingouAccent,
+            onTertiary = NatitingouTextPrimaryDark,
+            background = NatitingouBackgroundDark,
+            onBackground = NatitingouTextPrimaryDark,
+            surface = NatitingouSurfaceDark,
+            onSurface = NatitingouTextPrimaryDark,
+            surfaceVariant = NatitingouSurfaceDark.copy(alpha = 0.5f),
+            onSurfaceVariant = NatitingouTextSecondaryDark
+        ) else lightColorScheme(
+            primary = NatitingouPrimary,
+            onPrimary = Color.White,
+            secondary = NatitingouSecondary,
+            onSecondary = Color.White,
+            tertiary = NatitingouAccent,
+            onTertiary = NatitingouTextPrimary,
+            background = NatitingouBackground,
+            onBackground = NatitingouTextPrimary,
+            surface = NatitingouSurface,
+            onSurface = NatitingouTextPrimary,
+            surfaceVariant = Color(0xFFF3EBDE),
+            onSurfaceVariant = NatitingouTextSecondary
+        )
+        AkoThemeMode.GRAND_POPO -> if (darkTheme) darkColorScheme(
+            primary = GrandPopoPrimaryDark,
+            onPrimary = GrandPopoTextPrimaryDark,
+            secondary = GrandPopoSecondaryDark,
+            onSecondary = GrandPopoTextPrimaryDark,
+            tertiary = GrandPopoAccent,
+            onTertiary = GrandPopoTextPrimaryDark,
+            background = GrandPopoBackgroundDark,
+            onBackground = GrandPopoTextPrimaryDark,
+            surface = GrandPopoSurfaceDark,
+            onSurface = GrandPopoTextPrimaryDark,
+            surfaceVariant = GrandPopoSurfaceDark.copy(alpha = 0.5f),
+            onSurfaceVariant = GrandPopoTextSecondaryDark
+        ) else lightColorScheme(
+            primary = GrandPopoPrimary,
+            onPrimary = Color.White,
+            secondary = GrandPopoSecondary,
+            onSecondary = Color.White,
+            tertiary = GrandPopoAccent,
+            onTertiary = GrandPopoTextPrimary,
+            background = GrandPopoBackground,
+            onBackground = GrandPopoTextPrimary,
+            surface = GrandPopoSurface,
+            onSurface = GrandPopoTextPrimary,
+            surfaceVariant = Color(0xFFE8EEF5),
+            onSurfaceVariant = GrandPopoTextSecondary
+        )
     }
 
     MaterialTheme(
