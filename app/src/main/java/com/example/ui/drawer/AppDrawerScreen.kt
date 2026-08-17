@@ -1,7 +1,13 @@
 package com.example.ui.drawer
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -31,6 +38,7 @@ import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +46,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,11 +56,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.data.AppModel
 import com.example.ui.components.AkoCulturalBackground
 import com.example.ui.components.AlphabetIndexBar
@@ -187,7 +199,7 @@ fun AppDrawerScreen(
                 }
             }
 
-            // App List / Grid with Glass Cards
+            // App List / Grid with Glass Cards and Sections
             if (filteredApps.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -202,16 +214,71 @@ fun AppDrawerScreen(
                     )
                 }
             } else {
-                val alphabetIndex = remember(filteredApps) {
-                    filteredApps.map { it.label.firstOrNull()?.uppercaseChar() ?: '#' }
-                        .filter { it.isLetter() }
-                        .distinct()
-                        .sorted()
+                // Group apps alphabetically by their initial letter
+                val groupedApps = remember(filteredApps) {
+                    filteredApps.groupBy { app ->
+                        val firstChar = app.label.trim().firstOrNull()?.uppercaseChar() ?: '#'
+                        if (firstChar.isLetter()) firstChar else '#'
+                    }.toSortedMap(compareBy { if (it == '#') Char.MAX_VALUE else it })
+                }
+
+                val alphabetIndex = remember(groupedApps) {
+                    groupedApps.keys.toList()
+                }
+
+                // Map of letter to its scroll position
+                val listLetterIndices = remember(groupedApps) {
+                    val map = mutableMapOf<Char, Int>()
+                    var currentIndex = 0
+                    groupedApps.forEach { (letter, apps) ->
+                        map[letter] = currentIndex
+                        currentIndex += 1 + apps.size // 1 for header + apps
+                    }
+                    map
+                }
+
+                val gridLetterIndices = remember(groupedApps) {
+                    val map = mutableMapOf<Char, Int>()
+                    var currentIndex = 0
+                    groupedApps.forEach { (letter, apps) ->
+                        map[letter] = currentIndex
+                        currentIndex += 1 + apps.size // 1 for header span + apps
+                    }
+                    map
                 }
 
                 val listState = rememberLazyListState()
                 val gridState = rememberLazyGridState()
                 val coroutineScope = rememberCoroutineScope()
+
+                // Calculate currently visible letter dynamically based on scroll position
+                val currentVisibleLetter by remember(isGridView, groupedApps) {
+                    derivedStateOf {
+                        if (isGridView) {
+                            val firstVisible = gridState.firstVisibleItemIndex
+                            var matched = alphabetIndex.firstOrNull()
+                            for ((letter, index) in gridLetterIndices) {
+                                if (firstVisible >= index) {
+                                    matched = letter
+                                } else {
+                                    break
+                                }
+                            }
+                            matched
+                        } else {
+                            val firstVisible = listState.firstVisibleItemIndex
+                            var matched = alphabetIndex.firstOrNull()
+                            for ((letter, index) in listLetterIndices) {
+                                if (firstVisible >= index) {
+                                    matched = letter
+                                } else {
+                                    break
+                                }
+                            }
+                            matched
+                        }
+                    }
+                }
 
                 Box(
                     modifier = Modifier
@@ -222,48 +289,57 @@ fun AppDrawerScreen(
                         LazyVerticalGrid(
                             state = gridState,
                             columns = GridCells.Fixed(4),
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp, start = 8.dp, end = 36.dp),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp, start = 8.dp, end = 36.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(
-                                items = filteredApps,
-                                key = { it.packageName }
-                            ) { app ->
-                                GlassCard(
-                                    shape = RoundedCornerShape(16.dp),
-                                    elevation = 2.dp,
-                                    modifier = Modifier.fillMaxWidth()
+                            groupedApps.forEach { (letter, appsInGroup) ->
+                                item(
+                                    key = "header_$letter",
+                                    span = { GridItemSpan(maxLineSpan) }
                                 ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                onClick = { onAppClick(app) },
-                                                onLongClick = { onAppLongClick(app) }
-                                            )
-                                            .padding(8.dp)
+                                    AlphabetSectionHeader(letter = letter)
+                                }
+
+                                items(
+                                    items = appsInGroup,
+                                    key = { it.packageName }
+                                ) { app ->
+                                    GlassCard(
+                                        shape = RoundedCornerShape(16.dp),
+                                        elevation = 2.dp,
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        AppIconView(
-                                            packageName = app.packageName,
-                                            drawable = app.iconDrawable,
-                                            size = (iconSizeDp - 10).coerceAtLeast(36).dp,
-                                            shape = com.example.ui.theme.getShapeFor(iconShape)
-                                        )
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = { onAppClick(app) },
+                                                    onLongClick = { onAppLongClick(app) }
+                                                )
+                                                .padding(8.dp)
+                                        ) {
+                                            AppIconView(
+                                                packageName = app.packageName,
+                                                drawable = app.iconDrawable,
+                                                size = (iconSizeDp - 10).coerceAtLeast(36).dp,
+                                                shape = com.example.ui.theme.getShapeFor(iconShape)
+                                            )
 
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                            Spacer(modifier = Modifier.height(6.dp))
 
-                                        Text(
-                                            text = app.label,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            textAlign = TextAlign.Center
-                                        )
+                                            Text(
+                                                text = app.label,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -271,53 +347,62 @@ fun AppDrawerScreen(
                     } else {
                         LazyColumn(
                             state = listState,
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp, start = 8.dp, end = 36.dp),
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp, start = 8.dp, end = 36.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            items(
-                                items = filteredApps,
-                                key = { it.packageName }
-                            ) { app ->
-                                GlassCard(
-                                    shape = RoundedCornerShape(20.dp),
-                                    elevation = 2.dp,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .combinedClickable(
-                                                onClick = { onAppClick(app) },
-                                                onLongClick = { onAppLongClick(app) }
-                                            )
-                                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            groupedApps.forEach { (letter, appsInGroup) ->
+                                stickyHeader(key = "header_$letter") {
+                                    AlphabetSectionHeader(
+                                        letter = letter,
+                                        isSticky = true
+                                    )
+                                }
+
+                                items(
+                                    items = appsInGroup,
+                                    key = { it.packageName }
+                                ) { app ->
+                                    GlassCard(
+                                        shape = RoundedCornerShape(20.dp),
+                                        elevation = 2.dp,
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        AppIconView(
-                                            packageName = app.packageName,
-                                            drawable = app.iconDrawable,
-                                            size = iconSizeDp.dp,
-                                            shape = com.example.ui.theme.getShapeFor(iconShape)
-                                        )
-
-                                        Spacer(modifier = Modifier.width(16.dp))
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = app.label,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .combinedClickable(
+                                                    onClick = { onAppClick(app) },
+                                                    onLongClick = { onAppLongClick(app) }
+                                                )
+                                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                        ) {
+                                            AppIconView(
+                                                packageName = app.packageName,
+                                                drawable = app.iconDrawable,
+                                                size = iconSizeDp.dp,
+                                                shape = com.example.ui.theme.getShapeFor(iconShape)
                                             )
-                                            Text(
-                                                text = app.packageName,
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
+
+                                            Spacer(modifier = Modifier.width(16.dp))
+
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = app.label,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                                Text(
+                                                    text = app.packageName,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -325,21 +410,63 @@ fun AppDrawerScreen(
                         }
                     }
 
-                    // Alphabet Index Sidebar on the right
+                    // Floating Current Letter Indicator (Indicator of the current section)
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = currentVisibleLetter != null,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut(),
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 8.dp, bottom = 12.dp)
+                    ) {
+                        currentVisibleLetter?.let { letter ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .shadow(6.dp, RoundedCornerShape(20.dp))
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.95f))
+                                    .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = letter.toString(),
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Section $letter",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+
+                    // Alphabet Index Sidebar on the right with current letter feedback
                     if (alphabetIndex.isNotEmpty()) {
                         AlphabetIndexBar(
                             alphabet = alphabetIndex,
+                            currentLetter = currentVisibleLetter,
                             onLetterSelected = { selectedLetter ->
-                                val targetIndex = filteredApps.indexOfFirst {
-                                    it.label.firstOrNull()?.uppercaseChar() == selectedLetter
-                                }
-                                if (targetIndex >= 0) {
+                                if (isGridView) {
+                                    val targetIndex = gridLetterIndices[selectedLetter] ?: 0
                                     coroutineScope.launch {
-                                        if (isGridView) {
-                                            gridState.animateScrollToItem(targetIndex)
-                                        } else {
-                                            listState.animateScrollToItem(targetIndex)
-                                        }
+                                        gridState.animateScrollToItem(targetIndex)
+                                    }
+                                } else {
+                                    val targetIndex = listLetterIndices[selectedLetter] ?: 0
+                                    coroutineScope.launch {
+                                        listState.animateScrollToItem(targetIndex)
                                     }
                                 }
                             },
@@ -352,5 +479,56 @@ fun AppDrawerScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AlphabetSectionHeader(
+    letter: Char,
+    isSticky: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(
+                if (isSticky) {
+                    MaterialTheme.colorScheme.background.copy(alpha = 0.92f)
+                } else {
+                    Color.Transparent
+                }
+            )
+            .padding(vertical = if (isSticky) 6.dp else 8.dp, horizontal = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = letter.toString(),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            thickness = 1.5.dp,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+        )
     }
 }

@@ -41,6 +41,7 @@ import kotlin.math.roundToInt
 @Composable
 fun AlphabetIndexBar(
     alphabet: List<Char>,
+    currentLetter: Char? = null,
     onLetterSelected: (Char) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -49,6 +50,8 @@ fun AlphabetIndexBar(
     var activeLetter by remember { mutableStateOf<Char?>(null) }
     var activeIndex by remember { mutableStateOf(-1) }
     var columnHeight by remember { mutableStateOf(0f) }
+
+    val effectiveLetter = activeLetter ?: currentLetter
 
     Box(modifier = modifier) {
         // Floating Bubble
@@ -125,16 +128,17 @@ fun AlphabetIndexBar(
             verticalArrangement = Arrangement.SpaceEvenly
         ) {
             alphabet.forEach { letter ->
-                val isSelected = activeLetter == letter
+                val isBeingTouched = activeLetter == letter
+                val isCurrentInScroll = effectiveLetter == letter
                 val scale by animateFloatAsState(
-                    targetValue = if (isSelected) 1.6f else 1.0f,
+                    targetValue = if (isBeingTouched) 1.6f else if (isCurrentInScroll) 1.25f else 1.0f,
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
                         stiffness = Spring.StiffnessLow
                     ),
                     label = "letterScale"
                 )
-                val color = if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+                val color = if (isBeingTouched || isCurrentInScroll) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
                 
                 Box(
                     modifier = Modifier.weight(1f),
@@ -144,7 +148,7 @@ fun AlphabetIndexBar(
                         text = letter.toString(),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontSize = 10.sp,
-                            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold
+                            fontWeight = if (isBeingTouched || isCurrentInScroll) FontWeight.ExtraBold else FontWeight.Bold
                         ),
                         color = color,
                         modifier = Modifier.scale(scale)
