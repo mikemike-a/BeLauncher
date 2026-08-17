@@ -31,6 +31,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.data.IconCache
 
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Shape
 
 @Composable
@@ -39,7 +42,8 @@ fun AppIconView(
     drawable: Drawable?,
     modifier: Modifier = Modifier,
     size: Dp = 56.dp,
-    shape: Shape = RoundedCornerShape(18.dp)
+    shape: Shape = RoundedCornerShape(18.dp),
+    isThemed: Boolean = false
 ) {
     val context = LocalContext.current
     val bitmap = remember(packageName, drawable) {
@@ -53,6 +57,15 @@ fun AppIconView(
         animationSpec = spring(stiffness = 300f),
         label = "iconScale"
     )
+
+    val iconColorFilter = remember(isThemed) {
+        if (isThemed) {
+            val matrix = ColorMatrix().apply {
+                setToSaturation(0.2f)
+            }
+            ColorFilter.colorMatrix(matrix)
+        } else null
+    }
 
     Box(
         modifier = modifier
@@ -69,13 +82,17 @@ fun AppIconView(
                 spotColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
             )
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(
+                if (isThemed) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.85f)
+                else MaterialTheme.colorScheme.surfaceVariant
+            ),
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
             Image(
                 bitmap = bitmap,
                 contentDescription = null,
+                colorFilter = iconColorFilter,
                 modifier = Modifier.fillMaxSize()
             )
         } else {

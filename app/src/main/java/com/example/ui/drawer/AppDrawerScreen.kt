@@ -36,11 +36,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.List
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +49,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,11 +61,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.AppModel
@@ -73,6 +79,50 @@ import com.example.ui.components.AlphabetIndexBar
 import com.example.ui.components.AppIconView
 import com.example.ui.components.GlassCard
 import kotlinx.coroutines.launch
+
+enum class DrawerCategory(val label: String) {
+    ALL("Toutes"),
+    SOCIAL("Social"),
+    MEDIA("Médias & Jeux"),
+    PRODUCTIVITY("Travail & Outils"),
+    SYSTEM("Système")
+}
+
+private fun isAppInCategory(app: AppModel, category: DrawerCategory): Boolean {
+    val pkg = app.packageName.lowercase()
+    val name = app.label.lowercase()
+    return when (category) {
+        DrawerCategory.ALL -> true
+        DrawerCategory.SOCIAL -> {
+            pkg.contains("message") || pkg.contains("dialer") || pkg.contains("contact") ||
+            pkg.contains("phone") || pkg.contains("whatsapp") || pkg.contains("telegram") ||
+            pkg.contains("messenger") || pkg.contains("facebook") || pkg.contains("twitter") ||
+            pkg.contains("instagram") || pkg.contains("social") || name.contains("message") ||
+            name.contains("contact") || name.contains("téléphone") || name.contains("appel")
+        }
+        DrawerCategory.MEDIA -> {
+            pkg.contains("camera") || pkg.contains("photo") || pkg.contains("gallery") ||
+            pkg.contains("youtube") || pkg.contains("music") || pkg.contains("spotify") ||
+            pkg.contains("video") || pkg.contains("sound") || pkg.contains("game") ||
+            pkg.contains("play") || name.contains("photo") || name.contains("caméra") ||
+            name.contains("galerie") || name.contains("musique") || name.contains("jeu")
+        }
+        DrawerCategory.PRODUCTIVITY -> {
+            pkg.contains("mail") || pkg.contains("gmail") || pkg.contains("chrome") ||
+            pkg.contains("browser") || pkg.contains("clock") || pkg.contains("calendar") ||
+            pkg.contains("calculator") || pkg.contains("calc") || pkg.contains("deskclock") ||
+            pkg.contains("notes") || pkg.contains("drive") || pkg.contains("doc") ||
+            pkg.contains("sheet") || name.contains("horloge") || name.contains("calcul") ||
+            name.contains("calendrier") || name.contains("navigateur") || name.contains("notes")
+        }
+        DrawerCategory.SYSTEM -> {
+            pkg.contains("settings") || pkg.contains("parametre") || pkg.contains("file") ||
+            pkg.contains("documentsui") || pkg.contains("vending") || pkg.contains("packageinstaller") ||
+            pkg.contains("system") || pkg.contains("launcher") || name.contains("paramètre") ||
+            name.contains("fichier") || name.contains("système") || name.contains("téléchargement")
+        }
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -85,9 +135,28 @@ fun AppDrawerScreen(
     onBack: () -> Unit,
     onAppClick: (AppModel) -> Unit,
     onAppLongClick: (AppModel) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    autoOpenKeyboard: Boolean = false,
+    themedIcons: Boolean = false
 ) {
     var isGridView by rememberSaveable { mutableStateOf(false) }
+    var selectedCategory by rememberSaveable { mutableStateOf(DrawerCategory.ALL) }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        if (autoOpenKeyboard) {
+            focusRequester.requestFocus()
+        }
+    }
+
+    // Filter apps according to the active category
+    val categoryFilteredApps = remember(filteredApps, selectedCategory) {
+        if (selectedCategory == DrawerCategory.ALL) {
+            filteredApps
+        } else {
+            filteredApps.filter { isAppInCategory(it, selectedCategory) }
+        }
+    }
 
     Box(
         modifier = modifier
@@ -108,7 +177,7 @@ fun AppDrawerScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = 12.dp)
             ) {
                 GlassCard(
                     shape = CircleShape,
@@ -165,12 +234,48 @@ fun AppDrawerScreen(
                         focusedBorderColor = MaterialTheme.colorScheme.secondary,
                         unfocusedBorderColor = Color.White.copy(alpha = 0.5f)
                     ),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .focusRequester(focusRequester)
                 )
             }
 
-            // Quick Access / Suggested Apps (visible when not searching)
-            if (searchQuery.isEmpty() && filteredApps.isNotEmpty()) {
+            // Category Filter Chips
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 2.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            ) {
+                items(DrawerCategory.values()) { category ->
+                    val isSelected = selectedCategory == category
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.secondary
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                            )
+                            .combinedClickable(
+                                onClick = { selectedCategory = category }
+                            )
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = category.label,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            color = if (isSelected) MaterialTheme.colorScheme.onSecondary
+                            else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            // Quick Access / Suggested Apps (visible when not searching and on ALL category)
+            if (searchQuery.isEmpty() && selectedCategory == DrawerCategory.ALL && filteredApps.isNotEmpty()) {
                 val suggestedApps = remember(filteredApps) { filteredApps.take(5) }
                 Column(
                     modifier = Modifier
@@ -221,7 +326,8 @@ fun AppDrawerScreen(
                                         packageName = app.packageName,
                                         drawable = app.iconDrawable,
                                         size = 42.dp,
-                                        shape = com.example.ui.theme.getShapeFor(iconShape)
+                                        shape = com.example.ui.theme.getShapeFor(iconShape),
+                                        isThemed = themedIcons
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
@@ -248,7 +354,7 @@ fun AppDrawerScreen(
                     .padding(start = 8.dp, end = 4.dp, bottom = 12.dp)
             ) {
                 Text(
-                    text = "${filteredApps.size} applications trouvées",
+                    text = "${categoryFilteredApps.size} applications",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -273,7 +379,7 @@ fun AppDrawerScreen(
             }
 
             // App List / Grid with Glass Cards and Sections
-            if (filteredApps.isEmpty()) {
+            if (categoryFilteredApps.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -281,15 +387,15 @@ fun AppDrawerScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Aucune application trouvée",
+                        text = "Aucune application dans cette catégorie",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
                 // Group apps alphabetically by their initial letter
-                val groupedApps = remember(filteredApps) {
-                    filteredApps.groupBy { app ->
+                val groupedApps = remember(categoryFilteredApps) {
+                    categoryFilteredApps.groupBy { app ->
                         val firstChar = app.label.trim().firstOrNull()?.uppercaseChar() ?: '#'
                         if (firstChar.isLetter()) firstChar else '#'
                     }.toSortedMap(compareBy { if (it == '#') Char.MAX_VALUE else it })
@@ -360,19 +466,22 @@ fun AppDrawerScreen(
                 ) {
                     if (isGridView) {
                         LazyVerticalGrid(
-                            state = gridState,
                             columns = GridCells.Fixed(4),
-                            contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp, start = 8.dp, end = 36.dp),
+                            state = gridState,
+                            contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp, start = 4.dp, end = 32.dp),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             groupedApps.forEach { (letter, appsInGroup) ->
                                 item(
-                                    key = "header_$letter",
-                                    span = { GridItemSpan(maxLineSpan) }
+                                    span = { GridItemSpan(maxLineSpan) },
+                                    key = "header_$letter"
                                 ) {
-                                    AlphabetSectionHeader(letter = letter)
+                                    AlphabetSectionHeader(
+                                        letter = letter,
+                                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                                    )
                                 }
 
                                 items(
@@ -380,33 +489,32 @@ fun AppDrawerScreen(
                                     key = { it.packageName }
                                 ) { app ->
                                     GlassCard(
-                                        shape = RoundedCornerShape(16.dp),
+                                        shape = RoundedCornerShape(18.dp),
                                         elevation = 2.dp,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
                                         Column(
                                             horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center,
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .combinedClickable(
                                                     onClick = { onAppClick(app) },
                                                     onLongClick = { onAppLongClick(app) }
                                                 )
-                                                .padding(8.dp)
+                                                .padding(vertical = 12.dp, horizontal = 4.dp)
                                         ) {
                                             AppIconView(
                                                 packageName = app.packageName,
                                                 drawable = app.iconDrawable,
-                                                size = (iconSizeDp - 10).coerceAtLeast(36).dp,
-                                                shape = com.example.ui.theme.getShapeFor(iconShape)
+                                                size = iconSizeDp.dp,
+                                                shape = com.example.ui.theme.getShapeFor(iconShape),
+                                                isThemed = themedIcons
                                             )
-
                                             Spacer(modifier = Modifier.height(6.dp))
-
-                                            Text(
+                                            HighlightedDrawerText(
                                                 text = app.label,
-                                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                                query = searchQuery,
+                                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
                                                 color = MaterialTheme.colorScheme.onSurface,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
@@ -455,14 +563,16 @@ fun AppDrawerScreen(
                                                 packageName = app.packageName,
                                                 drawable = app.iconDrawable,
                                                 size = iconSizeDp.dp,
-                                                shape = com.example.ui.theme.getShapeFor(iconShape)
+                                                shape = com.example.ui.theme.getShapeFor(iconShape),
+                                                isThemed = themedIcons
                                             )
 
                                             Spacer(modifier = Modifier.width(16.dp))
 
                                             Column(modifier = Modifier.weight(1f)) {
-                                                Text(
+                                                HighlightedDrawerText(
                                                     text = app.label,
+                                                    query = searchQuery,
                                                     style = MaterialTheme.typography.titleMedium,
                                                     color = MaterialTheme.colorScheme.onSurface,
                                                     maxLines = 1,
@@ -552,6 +662,71 @@ fun AppDrawerScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun HighlightedDrawerText(
+    text: String,
+    query: String,
+    style: androidx.compose.ui.text.TextStyle,
+    color: Color,
+    highlightColor: Color = MaterialTheme.colorScheme.secondary,
+    maxLines: Int = 1,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
+    textAlign: TextAlign? = null,
+    modifier: Modifier = Modifier
+) {
+    val trimmed = query.trim()
+    if (trimmed.isEmpty() || !text.contains(trimmed, ignoreCase = true)) {
+        Text(
+            text = text,
+            style = style,
+            color = color,
+            maxLines = maxLines,
+            overflow = overflow,
+            textAlign = textAlign,
+            modifier = modifier
+        )
+    } else {
+        val annotated = remember(text, trimmed, color, highlightColor) {
+            buildAnnotatedString {
+                var startIndex = 0
+                val lowerText = text.lowercase()
+                val lowerQuery = trimmed.lowercase()
+
+                while (startIndex < text.length) {
+                    val matchIndex = lowerText.indexOf(lowerQuery, startIndex)
+                    if (matchIndex == -1) {
+                        append(text.substring(startIndex))
+                        break
+                    } else {
+                        if (matchIndex > startIndex) {
+                            append(text.substring(startIndex, matchIndex))
+                        }
+                        val matchEnd = matchIndex + lowerQuery.length
+                        withStyle(
+                            SpanStyle(
+                                color = highlightColor,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        ) {
+                            append(text.substring(matchIndex, matchEnd))
+                        }
+                        startIndex = matchEnd
+                    }
+                }
+            }
+        }
+        Text(
+            text = annotated,
+            style = style,
+            color = color,
+            maxLines = maxLines,
+            overflow = overflow,
+            textAlign = textAlign,
+            modifier = modifier
+        )
     }
 }
 

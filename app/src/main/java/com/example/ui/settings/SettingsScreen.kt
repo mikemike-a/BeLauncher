@@ -29,8 +29,12 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Keyboard
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.TextFields
+import androidx.compose.material.icons.rounded.TouchApp
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,11 +62,13 @@ import com.example.ui.components.AkoCulturalBackground
 import com.example.ui.components.AppIconView
 import com.example.ui.components.GlassCard
 import com.example.ui.theme.AbomeyPrimary
+import com.example.ui.theme.AkoIconShape
 import com.example.ui.theme.AkoThemeMode
 import com.example.ui.theme.CotonouPrimary
 import com.example.ui.theme.GrandPopoPrimary
 import com.example.ui.theme.NatitingouPrimary
 import com.example.ui.theme.OuidahPrimary
+import com.example.ui.theme.getShapeFor
 
 @Composable
 fun SettingsScreen(
@@ -70,7 +76,12 @@ fun SettingsScreen(
     allApps: List<AppModel>,
     onThemeSelected: (AkoThemeMode) -> Unit,
     onIconSizeSelected: (Int) -> Unit,
-    onIconShapeSelected: (com.example.ui.theme.AkoIconShape) -> Unit,
+    onIconShapeSelected: (AkoIconShape) -> Unit,
+    onClockStyleSelected: (String) -> Unit = {},
+    onShowAppLabelsToggle: (Boolean) -> Unit = {},
+    onThemedIconsToggle: (Boolean) -> Unit = {},
+    onAutoOpenKeyboardToggle: (Boolean) -> Unit = {},
+    onDoubleTapToLockToggle: (Boolean) -> Unit = {},
     onLockScreenToggle: (Boolean) -> Unit,
     onToggleHideApp: (AppModel) -> Unit,
     onUpdateHiddenAppsPassword: (String) -> Unit,
@@ -264,7 +275,84 @@ fun SettingsScreen(
                 }
             }
 
-            // Glass Icon Size Section
+            // Horloge & Widget Section
+            Text(
+                text = "Style de l'Horloge",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
+            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(bottom = 24.dp)
+            ) {
+                val clockOptions = listOf(
+                    Triple("AKO", "Carte de Verre Akɔ̀", "Design signature avec carte en verre et salutation culturelle"),
+                    Triple("ANALOG", "Cadran Analogique", "Aiguilles fluides et cadran géométrique béninois"),
+                    Triple("MINIMAL", "Typographie Épurée", "Heure grand format minimaliste sans bordure")
+                )
+
+                clockOptions.forEach { (styleKey, title, desc) ->
+                    val isSelected = preferences.clockStyle == styleKey
+                    GlassCard(
+                        shape = RoundedCornerShape(22.dp),
+                        elevation = if (isSelected) 4.dp else 2.dp,
+                        borderColor = if (isSelected) MaterialTheme.colorScheme.secondary else Color.White.copy(alpha = 0.4f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onClockStyleSelected(styleKey) }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Schedule,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = desc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = "Sélectionné",
+                                    tint = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Glass Icon Style Section
             Text(
                 text = "Apparence des icônes",
                 style = MaterialTheme.typography.titleLarge,
@@ -277,7 +365,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                com.example.ui.theme.AkoIconShape.entries.forEach { shapeOption ->
+                AkoIconShape.entries.forEach { shapeOption ->
                     val isSelected = preferences.iconShape == shapeOption
                     
                     GlassCard(
@@ -297,7 +385,7 @@ fun SettingsScreen(
                             Box(
                                 modifier = Modifier
                                     .size(42.dp)
-                                    .clip(com.example.ui.theme.getShapeFor(shapeOption))
+                                    .clip(getShapeFor(shapeOption))
                                     .background(MaterialTheme.colorScheme.primaryContainer),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -337,12 +425,13 @@ fun SettingsScreen(
                 }
             }
 
+            // Icon Size selector
             GlassCard(
                 shape = RoundedCornerShape(22.dp),
                 elevation = 2.dp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp)
+                    .padding(bottom = 16.dp)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -377,15 +466,203 @@ fun SettingsScreen(
                 }
             }
 
-            // Glass Lock Screen Card
+            // Themed Icons Switch
+            GlassCard(
+                shape = RoundedCornerShape(22.dp),
+                elevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Icônes thématiques",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Adapte les teintes des icônes aux couleurs culturelles",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = preferences.themedIcons,
+                        onCheckedChange = onThemedIconsToggle,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
+                            checkedTrackColor = MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                }
+            }
+
+            // Show App Labels Switch
+            GlassCard(
+                shape = RoundedCornerShape(22.dp),
+                elevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.TextFields,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Noms des applications",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Afficher les étiquettes de texte sous les icônes",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = preferences.showAppLabels,
+                        onCheckedChange = onShowAppLabelsToggle,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
+                            checkedTrackColor = MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                }
+            }
+
+            // Comportements & Gestes Section
             Text(
-                text = "Fonctionnalités",
+                text = "Comportement & Gestes",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 12.dp, start = 4.dp)
             )
 
-            // Glass Lock Screen Card
+            // Auto Open Keyboard Switch
+            GlassCard(
+                shape = RoundedCornerShape(22.dp),
+                elevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Keyboard,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Clavier automatique",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Ouvre directement le clavier à l'ouverture du tiroir",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = preferences.autoOpenKeyboard,
+                        onCheckedChange = onAutoOpenKeyboardToggle,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
+                            checkedTrackColor = MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                }
+            }
+
+            // Double Tap to Lock Switch
+            GlassCard(
+                shape = RoundedCornerShape(22.dp),
+                elevation = 2.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.TouchApp,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Double-tap pour verrouiller",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Touchez deux fois un espace vide pour afficher l'écran de verrouillage",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = preferences.doubleTapToLock,
+                        onCheckedChange = onDoubleTapToLockToggle,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onSecondary,
+                            checkedTrackColor = MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                }
+            }
+
+            // Lock Screen Switch
             GlassCard(
                 shape = RoundedCornerShape(22.dp),
                 elevation = 2.dp,
@@ -518,7 +795,8 @@ fun SettingsScreen(
                                         packageName = app.packageName,
                                         drawable = app.iconDrawable,
                                         size = 40.dp,
-                                        shape = com.example.ui.theme.getShapeFor(preferences.iconShape)
+                                        shape = getShapeFor(preferences.iconShape),
+                                        isThemed = preferences.themedIcons
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {

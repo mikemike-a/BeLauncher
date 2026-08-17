@@ -235,6 +235,36 @@ class LauncherViewModel(
         }
     }
 
+    fun setClockStyle(style: String) {
+        viewModelScope.launch {
+            preferences.setClockStyle(style)
+        }
+    }
+
+    fun setShowAppLabels(show: Boolean) {
+        viewModelScope.launch {
+            preferences.setShowAppLabels(show)
+        }
+    }
+
+    fun setThemedIcons(enabled: Boolean) {
+        viewModelScope.launch {
+            preferences.setThemedIcons(enabled)
+        }
+    }
+
+    fun setAutoOpenKeyboard(enabled: Boolean) {
+        viewModelScope.launch {
+            preferences.setAutoOpenKeyboard(enabled)
+        }
+    }
+
+    fun setDoubleTapToLock(enabled: Boolean) {
+        viewModelScope.launch {
+            preferences.setDoubleTapToLock(enabled)
+        }
+    }
+
     fun addWidget(widgetId: Int) {
         viewModelScope.launch {
             preferences.addWidget(widgetId)

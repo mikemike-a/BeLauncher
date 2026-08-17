@@ -169,14 +169,16 @@ fun FloatingBubbleField(
     iconShape: AkoIconShape,
     onAppClick: (AppModel) -> Unit,
     onAppLongClick: (AppModel) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isThemed: Boolean = false,
+    showLabels: Boolean = true
 ) {
     if (apps.isEmpty()) return
 
     val density = LocalDensity.current
     val bubbleDiameter = 74.dp
     val bubbleWidth = 85.dp
-    val bubbleHeight = 105.dp
+    val bubbleHeight = if (showLabels) 105.dp else 80.dp
 
     val bubbleDiameterPx = with(density) { bubbleDiameter.toPx() }
     val bubbleWidthPx = with(density) { bubbleWidth.toPx() }
@@ -340,6 +342,8 @@ fun FloatingBubbleField(
             InteractiveBubbleItem(
                 bubble = bubble,
                 iconShape = iconShape,
+                isThemed = isThemed,
+                showLabels = showLabels,
                 onClick = { onAppClick(bubble.app) },
                 onLongClick = { onAppLongClick(bubble.app) },
                 modifier = Modifier.offset {
@@ -361,7 +365,9 @@ fun InteractiveBubbleItem(
     iconShape: AkoIconShape,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isThemed: Boolean = false,
+    showLabels: Boolean = true
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -511,22 +517,25 @@ fun InteractiveBubbleItem(
                 packageName = bubble.app.packageName,
                 drawable = bubble.app.iconDrawable,
                 size = 52.dp,
-                shape = getShapeFor(iconShape)
+                shape = getShapeFor(iconShape),
+                isThemed = isThemed
             )
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        if (showLabels) {
+            Spacer(modifier = Modifier.height(6.dp))
 
-        // App Label
-        Text(
-            text = bubble.app.label,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
+            // App Label
+            Text(
+                text = bubble.app.label,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

@@ -67,6 +67,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import com.example.ui.components.AkoClockWidget
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun HomeScreen(
@@ -82,6 +85,11 @@ fun HomeScreen(
     alphabetIndex: List<Char>,
     iconSizeDp: Int,
     iconShape: com.example.ui.theme.AkoIconShape,
+    clockStyle: String = "AKO",
+    showAppLabels: Boolean = true,
+    themedIcons: Boolean = false,
+    doubleTapToLock: Boolean = true,
+    onLockDevice: () -> Unit = {},
     onAppClick: (AppModel) -> Unit,
     onAppLongClick: (AppModel) -> Unit,
     onOpenSearch: () -> Unit,
@@ -125,6 +133,15 @@ fun HomeScreen(
                     false
                 }
             }
+            .pointerInput(doubleTapToLock) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (doubleTapToLock) {
+                            onLockDevice()
+                        }
+                    }
+                )
+            }
             .pointerInput(Unit) {
                 detectVerticalDragGestures { _, dragAmount ->
                     if (dragAmount < -25f) {
@@ -143,47 +160,12 @@ fun HomeScreen(
                 .padding(top = 16.dp)
         ) {
             if (pagerState.currentPage == 0) {
-                // Glass Main Clock Header Card
-                GlassCard(
-                    shape = RoundedCornerShape(28.dp),
-                    elevation = 6.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 24.dp)
-                    ) {
-                        Text(
-                            text = greetingMessage,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = currentTime,
-                                style = MaterialTheme.typography.displayMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            Text(
-                                text = currentDate,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(bottom = 6.dp)
-                            )
-                        }
-                    }
-                }
+                AkoClockWidget(
+                    clockStyle = clockStyle,
+                    greetingMessage = greetingMessage,
+                    currentTime = currentTime,
+                    currentDate = currentDate
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
             } else {
@@ -210,6 +192,8 @@ fun HomeScreen(
                         FloatingBubbleField(
                             apps = bubbleApps,
                             iconShape = iconShape,
+                            isThemed = themedIcons,
+                            showLabels = showAppLabels,
                             onAppClick = onAppClick,
                             onAppLongClick = onAppLongClick,
                             modifier = Modifier
@@ -295,17 +279,20 @@ fun HomeScreen(
                                                             packageName = appModel.packageName,
                                                             drawable = appModel.iconDrawable,
                                                             size = 64.dp,
-                                                            shape = com.example.ui.theme.getShapeFor(iconShape)
+                                                            shape = com.example.ui.theme.getShapeFor(iconShape),
+                                                            isThemed = themedIcons
                                                         )
-                                                        Spacer(modifier = Modifier.height(6.dp))
-                                                        Text(
-                                                            text = appModel.label,
-                                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
-                                                            color = MaterialTheme.colorScheme.onBackground,
-                                                            maxLines = 1,
-                                                            overflow = TextOverflow.Ellipsis,
-                                                            textAlign = TextAlign.Center
-                                                        )
+                                                        if (showAppLabels) {
+                                                            Spacer(modifier = Modifier.height(6.dp))
+                                                            Text(
+                                                                text = appModel.label,
+                                                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                                                                color = MaterialTheme.colorScheme.onBackground,
+                                                                maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
+                                                                textAlign = TextAlign.Center
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }

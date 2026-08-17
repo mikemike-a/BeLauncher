@@ -26,7 +26,12 @@ data class AkoUserPreferences(
     val workspaceItems: Set<String> = emptySet(),
     val enableLockScreen: Boolean = true,
     val isDarkModeEnabled: Boolean = false,
-    val hiddenAppsPassword: String = "1234"
+    val hiddenAppsPassword: String = "1234",
+    val clockStyle: String = "AKO",
+    val showAppLabels: Boolean = true,
+    val themedIcons: Boolean = false,
+    val autoOpenKeyboard: Boolean = false,
+    val doubleTapToLock: Boolean = true
 )
 
 class LauncherPreferences(private val context: Context) {
@@ -42,6 +47,11 @@ class LauncherPreferences(private val context: Context) {
         val LOCK_SCREEN = booleanPreferencesKey("enable_lock_screen")
         val DARK_MODE = booleanPreferencesKey("enable_dark_mode")
         val HIDDEN_PASSWORD = stringPreferencesKey("hidden_apps_password")
+        val CLOCK_STYLE = stringPreferencesKey("clock_style")
+        val SHOW_APP_LABELS = booleanPreferencesKey("show_app_labels")
+        val THEMED_ICONS = booleanPreferencesKey("themed_icons")
+        val AUTO_OPEN_KEYBOARD = booleanPreferencesKey("auto_open_keyboard")
+        val DOUBLE_TAP_TO_LOCK = booleanPreferencesKey("double_tap_to_lock")
     }
 
     val preferencesFlow: Flow<AkoUserPreferences> = context.dataStore.data.map { prefs ->
@@ -67,6 +77,11 @@ class LauncherPreferences(private val context: Context) {
         val lockScreen = prefs[Keys.LOCK_SCREEN] ?: true
         val darkMode = prefs[Keys.DARK_MODE] ?: false
         val hiddenPassword = prefs[Keys.HIDDEN_PASSWORD] ?: "1234"
+        val clockStyle = prefs[Keys.CLOCK_STYLE] ?: "AKO"
+        val showAppLabels = prefs[Keys.SHOW_APP_LABELS] ?: true
+        val themedIcons = prefs[Keys.THEMED_ICONS] ?: false
+        val autoOpenKeyboard = prefs[Keys.AUTO_OPEN_KEYBOARD] ?: false
+        val doubleTapToLock = prefs[Keys.DOUBLE_TAP_TO_LOCK] ?: true
 
         AkoUserPreferences(
             themeMode = themeMode,
@@ -78,7 +93,12 @@ class LauncherPreferences(private val context: Context) {
             workspaceItems = workspaceItems,
             enableLockScreen = lockScreen,
             isDarkModeEnabled = darkMode,
-            hiddenAppsPassword = hiddenPassword
+            hiddenAppsPassword = hiddenPassword,
+            clockStyle = clockStyle,
+            showAppLabels = showAppLabels,
+            themedIcons = themedIcons,
+            autoOpenKeyboard = autoOpenKeyboard,
+            doubleTapToLock = doubleTapToLock
         )
     }
 
@@ -175,6 +195,36 @@ class LauncherPreferences(private val context: Context) {
     suspend fun setEnableLockScreen(enable: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.LOCK_SCREEN] = enable
+        }
+    }
+
+    suspend fun setClockStyle(style: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.CLOCK_STYLE] = style
+        }
+    }
+
+    suspend fun setShowAppLabels(show: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.SHOW_APP_LABELS] = show
+        }
+    }
+
+    suspend fun setThemedIcons(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.THEMED_ICONS] = enabled
+        }
+    }
+
+    suspend fun setAutoOpenKeyboard(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.AUTO_OPEN_KEYBOARD] = enabled
+        }
+    }
+
+    suspend fun setDoubleTapToLock(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.DOUBLE_TAP_TO_LOCK] = enabled
         }
     }
 }
